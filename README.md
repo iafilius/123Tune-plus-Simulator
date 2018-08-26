@@ -25,4 +25,4 @@ Most importand: found a  security/design issue, which prevents me to put it in u
 
 # availability
 
-The software is available and ready, but just needs to cleaned upto mke it available.
+The software is available and ready, but just needs to cleaned upto make it available.
