@@ -20,8 +20,8 @@ So I reverse engineered the used bluetooth protocol, to made it fully accepted b
 
 # BUGS
 
-Of course there are no bugs in my software, but i found some while reverse engineering.
-Most importand: found a  security/design issue, which prevents me to put it in use because it is quite easy for anyone to take controll of your ignition.
+* Of course there are no bugs in my software, but i found some while reverse engineering.
+* Most importand: found a  security/design issue, which prevents me to put it in use because it is quite easy for anyone to take controll of your ignition. informed/contacted info@123ignitionshop.com and waiting for an answer.
 
 # availability
 
