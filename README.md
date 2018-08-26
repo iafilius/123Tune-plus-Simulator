@@ -11,7 +11,7 @@ The 123Tune+ is missing an importand feature, switchable curves which was availa
 
 So I reverse engineered the used bluetooth protocol, to made it fully accepted by the (IOS) client.
 
-# inteneded uses
+# intended uses
 
 * Write your onw (open) client
 * implement missing features like missing curve switch
@@ -22,3 +22,7 @@ So I reverse engineered the used bluetooth protocol, to made it fully accepted b
 
 Of course there are no bugs in my software, but i found some while reverse engineering.
 Most importand: found a  security/design issue, which prevents me to put it in use because it is quite easy for anyone to take controll of your ignition.
+
+# availability
+
+The software is available and ready, but just needs to cleaned upto mke it available.
