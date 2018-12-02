@@ -14,15 +14,17 @@ So I reverse engineered the used bluetooth protocol, to made it fully accepted b
 # issues with the 123Tune+
 
 * Depends on platform (android/IOS), which might completely forgotten in 40 years.
-* Easy curve switching feature is missing, feel the need to implement that myself.
-* It has a major security flaw, described under BUGS. I refuse to use it, and so should you. or do don't care if someone takes controll over your ignition?
+* Software is closed source, and in combination with above remarks, worrisome for long run
+* Easy curve switching feature is missing (which is available in regular 123Tune), felt the need to implement that myself.
+* It has a major security flaw, described under BUGS. I refuse to use it, and so should you. Or do you not care if someone takes controll over your ignition?
 
 # intended uses
 
 * Write your own (open) client 
 * implement missing features like missing curve switch
 * implement missing performance tuning options
-* make sure your client is future proof, as your oldtimer might be 40 years of older, you want to make sure client software option is available long after Iphones and Android has been forgotten.
+* Intentions for integrating with microcontrollers like ESP32.
+* make sure your client is future proof, as your oldtimer might become another 40 years older, you want to make sure client software option is available long after Iphones and Android has been forgotten.
 
 # BUGS
 
@@ -31,7 +33,7 @@ So I reverse engineered the used bluetooth protocol, to made it fully accepted b
 
 # availability
 
-The software is available as is, and just as i left it.
+The software is available as is, and just as i left it, including lost of comments, and debug.
 
 # How to use
 
