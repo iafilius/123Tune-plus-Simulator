@@ -440,7 +440,7 @@ static bool tune_msrmt_cb(void *user_data)
 	uint16_t len = 1;
 	uint8_t pdu[100];
 	uint32_t cur_ee;
-	static int iteration=-10;
+	static int iteration=-20;
 	
 
 	pdu[0] = 0x0d;
@@ -1771,6 +1771,13 @@ static void tune_control_point_write_cb(struct gatt_db_attribute *attrib,
         	value_ptr++;
                 len_cleaned--;
         	}
+        	
+          // need to clean tailing 0x24 's tooo (due to new 123 tune software??/new conditions) ???
+          // only clean single 0x24 trailing item
+          // 2019/01/19 fixup
+          if(len_cleaned>0) {
+          	if(value_ptr[len_cleaned-1]== 0x24)len_cleaned--;
+          }
 
         if(len_cleaned==0) 
         	goto done;
@@ -1840,7 +1847,9 @@ done:
 	// send resuest
 	{
 	//uint8_t str[] = { 0x24, 0x24, 0x0d };
-	uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };
+	//uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };	
+	//uint8_t str[] = { 0x31, 0x30, 0x40, 0x0d, 0x24 };
+	uint8_t str[] = { 0x31, 0x30, 0x40, 0x0d };
 	//uint8_t str_resp[] = { 0x0d };
 	//uint8_t str_resp1[] = {0x0d, 0x31, 0x30, 0x40, 0x0d, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x30, 0x41, 0x20, 0x30, 0x30, 0x20, 0x30, 0x45, 0x20};
 	//uint8_t str_resp2[] = {0x30, 0x30, 0x20, 0x31, 0x30, 0x20, 0x30, 0x30, 0x20, 0x31, 0x34, 0x20, 0x31, 0x34, 0x20, 0x31, 0x45, 0x20, 0x33, 0x43};
@@ -2095,7 +2104,8 @@ done:
 	//uint8_t str[] = { 0x24, 0x24, 0x0d };
 	//uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };
 	//uint8_t str[] = { 0x24, 0x24, 0x31, 0x31, 0x40, 0x0d };
-	uint8_t str[] = { 0x31, 0x32, 0x40, 0x0d };
+	uint8_t str[] = { 0x31, 0x32, 0x40, 0x0d  };		// working in 2018
+	//uint8_t str[] = { 0x31, 0x32, 0x40, 0x0d, 0x24 };
 	//uint8_t str_resp[] = { 0x0d };
 	//uint8_t str_resp1[] = { 0x31, 0x32, 0x40, 0x0d, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x30, 0x30, 0x20, 0x33, 0x37, 0x20, 0x31, 0x44, 0x20, 0x33 };
 	//uint8_t str_resp2[] = { 0x37, 0x20, 0x31, 0x45, 0x20, 0x33, 0x37, 0x20, 0x32, 0x38, 0x20, 0x33, 0x37, 0x20, 0x35, 0x38, 0x20, 0x30, 0x30, 0x20 };
@@ -2220,7 +2230,8 @@ done:
 	//uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };
 	//uint8_t str[] = { 0x24, 0x24, 0x31, 0x31, 0x40, 0x0d };
 	//uint8_t str[] = { 0x24, 0x24, 0x31, 0x32, 0x40, 0x0d };
-	uint8_t str[] = { 0x31, 0x33, 0x40, 0x0d };
+	uint8_t str[] = { 0x31, 0x33, 0x40, 0x0d };	// was working in 2018
+	//uint8_t str[] = { 0x31, 0x33, 0x40, 0x0d, 0x24 };
 	//uint8_t str_resp[] = { 0x0d };
 	//uint8_t str_resp1[] = { 0x31, 0x33, 0x40, 0x0d, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46 };
 	//uint8_t str_resp2[] = { 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20 };
@@ -2350,7 +2361,8 @@ done:
 	//uint8_t str[] = { 0x24, 0x24, 0x31, 0x31, 0x40, 0x0d };
 	//uint8_t str[] = { 0x24, 0x24, 0x31, 0x32, 0x40, 0x0d };
 	//uint8_t str[] = { 0x24, 0x24, 0x31, 0x33, 0x40, 0x0d };
-	uint8_t str[] = {  0x76, 0x40, 0x0d };
+	uint8_t str[] = {  0x76, 0x40, 0x0d };	// was working in 2018
+	//uint8_t str[] = {  0x76, 0x40, 0x0d, 0x24 };
 	//uint8_t str_resp[] = { 0x0d };
 
 	// orig command 6:
@@ -2378,9 +2390,10 @@ done:
 		}
 	if(equal == 1)
 		{
+		unsigned int bytecounter;
 
 		uint8_t str_resp1[] =   { 
-			0x76, 0x40, 0x0d, 
+			0x76, 0x40, 0x0d,	// the optional trailing 0x24 must NOT be added....
 			0x34, 0x33, 		// [3][4] Voltage
 			0x34, 0x39, 		// [5][6] Temperature
 			0x37, 0x34, 		// [7][8] Pressure
@@ -2390,14 +2403,25 @@ done:
 			};
 		size_t str_resp1_len=sizeof(str_resp1);
 
-		str_resp1[3] = server->tune_Voltage[0];                 // read actual value MSB from internal state
-		str_resp1[4] = server->tune_Voltage[1];			// read actual value LSB from internal state
+		bytecounter=3;//len_cleaned;
 
-		str_resp1[5] = server->tune_Temperature[0];             // read actual value MSB from internal state
-		str_resp1[6] = server->tune_Temperature[1];		// read actual value LSB from internal state
+		decimal2TuneVoltage(14.0, &server->tune_Voltage[0],&server->tune_Voltage[1]);
 
-		str_resp1[7] = server->tune_Pressure[0];             	// read actual value MSB from internal state
-		str_resp1[8] = server->tune_Pressure[1];		// read actual value LSB from internal state
+		str_resp1[bytecounter++] = server->tune_Voltage[0];                 // read actual value MSB from internal state
+		str_resp1[bytecounter++] = server->tune_Voltage[1];			// read actual value LSB from internal state
+
+		decimal2TuneTemperature(35 ,&server->tune_Temperature[0],&server->tune_Temperature[1]);
+		
+		str_resp1[bytecounter++] = server->tune_Temperature[0];             // read actual value MSB from internal state
+		str_resp1[bytecounter++] = server->tune_Temperature[1];		// read actual value LSB from internal state
+
+		decimal2TunePressure(150, &server->tune_Pressure[0],&server->tune_Pressure[1]);
+		str_resp1[bytecounter++] = server->tune_Pressure[0];             	// read actual value MSB from internal state
+		str_resp1[bytecounter++] = server->tune_Pressure[1];		// read actual value LSB from internal state
+
+		// Test these byte location.. failed.
+		//str_resp1[bytecounter++] = server->tune_Temperature[0];             // read actual value MSB from internal state
+		//str_resp1[bytecounter++] = server->tune_Temperature[1];		// read actual value LSB from internal state
 
 		printf("%s Temperature %d Celcius\n",__FUNCTION__,TuneTemperature2decimal(server->tune_Temperature[0],server->tune_Temperature[1]));	// test reverse function  (and forward)
 
@@ -3087,7 +3111,7 @@ static struct server *server_create(int fd, uint16_t mtu, bool hr_visible, bool 
 		goto fail;
 	}
 
-	server->gatt = bt_gatt_server_new(server->db, server->att, mtu);
+	server->gatt = bt_gatt_server_new(server->db, server->att, mtu, 0);
 	if (!server->gatt) {
 		fprintf(stderr, "Failed to create GATT server\n");
 		goto fail;
