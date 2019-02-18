@@ -1,0 +1,27 @@
+
+2019/02
+-Ported btgatt-server.c to Arduino/ESP32 and provide the Arduino/ESp32 project
+-Catched up with new 123Tune client software
+ -Slightly different behaviour and slightly different data packets over
+ bluetooth.
+ A "noop" 0x24 is added to the recieved packets, sometimes even more.
+ when changed pincode is changed, the new actual value is requested by
+ client (and validated) (All traffic is not encrypted)
+
+-ESP32: implemented MAP curve read/write (instead returning static values).
+ what gets written is now identical to what is read, no longer a fixed table is returned
+-ESP32: implemented to return the new pincode entered, instead static
+ hardcoded always the same.
+-ESP32: implemented read/write Advance RPM/Advance curve
+-ESP32: implemented configurable Starts@RPM
+-ESP32: implemented configurable RPM Limit
+-ESP32: reverse engineered deviceID, and made it configurable in code.
+-ESP32: reverse engineered the 'v@' Version command (with temperature, Voltage and pressure, and version string combined)
+
+-Backported: MAP Curve read/write to btgatt-server.c
+-Backported: pincode code to btgatt-server.c
+-Backported: Advance (RPM/Advance) Curve read/write to btgatt-server.c
+-Backported: implemented configureable Starts@RPM
+-Backported: implemented configurable RPM Limit
+-NOT backported: DeviceID not backported into btgatt-server.c, as it is in binary string in bluetooth setup script in linux , and not in btgatt-server.c
+-Backported: 'v@' version into btgatt-server.c

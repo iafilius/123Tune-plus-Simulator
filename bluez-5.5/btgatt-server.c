@@ -53,6 +53,9 @@
 #define UUID_HEART_RATE_CTRL		0x2a39
 #define UUID_123TUNE_UNKNOWN_STR 	"0xDA2B84F1627948DEBDC0AFBEA0226079"
 
+#define C_nr_123MapCurve_Elements 10    // # of elements/size of arrays
+#define C_nr_123AdvanceCurve_Elements 10    // # of elements/size of arrays
+
 #define ATT_CID 4
 
 #define PRLOG(...) \
@@ -96,12 +99,12 @@ struct server {
 	uint16_t tune_handle;
 	uint16_t tune_msrmt_handle;
 	uint16_t tune_energy_expended;
-	
+
 	bool hr_visible;
 	bool hr_msrmt_enabled;
 	bool tune_visible;
 	bool tune_msrmt_enabled;
-	
+
 	bool tune_TuningMode_enabled;	// In Tuning mode, or not
 	int tune_TuningMode_Advance;	// degrees Advance shift in Tuning mode, positive or negative, max value ???
 	bool tune_IMMOBILIZED;		// immobilized? or not
@@ -114,20 +117,20 @@ struct server {
 	uint8_t tune_Voltage[2];	// Actual Voltage
 	uint8_t tune_Ampere[2];		// Actual Ampere
 	uint8_t tune_UNDISCOVERED[2];	// Unknown until now, let's see later
-	
+
 
 	// 2 arrays make one graphs, arrays are bluetooth command organized.
 	uint8_t tune_AdvanceCurveRPM[10][2];	 	// Pos No  1 ... 10  , Value[2]
 	uint8_t tune_AdvanceCurveDegrees[10][2];	// Pos No  1 ... 10  , Value[2]
 	uint8_t tune_RPMLimit[2];			// Above this...
-	
+
 	// MAP curve
 	uint8_t tune_MapCurvePressure[10][2];		// Pos No  1 ... 10  , Value[2]
 	uint8_t tune_MapCurveDegrees[10][2];		// Pos No  1 ... 10  , Value[2]
 	uint8_t tune_MapCurveStartRPM[2];		// below this value no MapCurve Active.
-	
+
 	uint8_t tune_Pincode[10][2];			// Strings stored in transport format, as is the other variables
-	
+
 	int hr_ee_count;
 	int tune_ee_count;
 	unsigned int hr_timeout_id;
@@ -150,7 +153,7 @@ uint32_t TunePressure2decimal(uint8_t MSB, uint8_t LSB);
 uint32_t decimal2TunePressure(uint32_t Pressure, uint8_t *MSB, uint8_t *LSB); 	// Inverse TunePressure2decimal
 
 int32_t  TuneTemperature2decimal(uint8_t MSB, uint8_t LSB);
-uint32_t decimal2TuneTemperature(double Temperature, uint8_t *MSB, uint8_t *LSB); 	// inverse	
+uint32_t decimal2TuneTemperature(double Temperature, uint8_t *MSB, uint8_t *LSB); 	// inverse
 
 double   TuneAmpere2decimal(uint8_t MSB, uint8_t LSB);
 uint32_t decimal2TuneAmpere(double Ampere, uint8_t *MSB, uint8_t *LSB);  	//inverse
@@ -175,7 +178,7 @@ void UpdateRealtimeTuneAdvance(void *user_data);
 
 
 
-// calculated and write byte number 3 
+// calculated and write byte number 3
 uint32_t TuneSetnewChecksum(const uint8_t* str,uint8_t *csum);
 #define ROUND_2_INT(f) ((int)(f >= 0.0 ? (f + 0.5) : (f - 0.5)))	// Avoid chopping when float to int, use rounding when a bit matters..
 
@@ -381,7 +384,7 @@ static void hr_msrmt_ccc_read_cb(struct gatt_db_attribute *attrib,
 
 	value[0] = server->hr_msrmt_enabled ? 0x01 : 0x00;
 	value[1] = 0x00;
-	
+
 	PRLOG("DBG: hr_msrmt_ccc_read_cb\n");
 
 	gatt_db_attribute_read_result(attrib, id, 0, value, 2);
@@ -397,7 +400,7 @@ static void tune_msrmt_ccc_read_cb(struct gatt_db_attribute *attrib,
 
 	value[0] = server->tune_msrmt_enabled ? 0x01 : 0x00;
 	value[1] = 0x00;
-	
+
 	PRLOG("DBG: tune_msrmt_ccc_read_cb\n");
 
 	gatt_db_attribute_read_result(attrib, id, 0, value, 2);
@@ -441,7 +444,7 @@ static bool tune_msrmt_cb(void *user_data)
 	uint8_t pdu[100];
 	uint32_t cur_ee;
 	static int iteration=-20;
-	
+
 
 	pdu[0] = 0x0d;
 	//pdu[1] = 90 + (rand() % 40);
@@ -482,8 +485,8 @@ static bool tune_msrmt_cb(void *user_data)
 			memcpy(pdu,str,len);
 			}
 			break;
-			
-			
+
+
 		case 2:
 			{ // 31:30:30:41:20 88.65Sec
 			uint8_t str[] = { 0x31, 0x30, 0x30, 0x41, 0x20 };
@@ -571,10 +574,10 @@ static bool tune_msrmt_cb(void *user_data)
 
 			// set new Temperature in server internal
 			decimal2TuneTemperature(60 ,&server->tune_Temperature[0],&server->tune_Temperature[1]);
-			
+
 			// set new Voltage in server Internal
 			decimal2TuneVoltage(14.2 ,&server->tune_Voltage[0],&server->tune_Voltage[1]);
-			
+
 			// set new pressure in server Internal
 			decimal2TunePressure(20 ,&server->tune_Pressure[0],&server->tune_Pressure[1]);
 
@@ -583,28 +586,28 @@ static bool tune_msrmt_cb(void *user_data)
 			//decimal2TuneAdvance(10.0 ,&server->tune_Advance[0],&server->tune_Advance[1]);
 
 			// set Temperature in server internal
-			decimal2TuneAmpere(2.8 ,&server->tune_Ampere[0],&server->tune_Ampere[1]);		
+			decimal2TuneAmpere(2.8 ,&server->tune_Ampere[0],&server->tune_Ampere[1]);
 
 			// Set new RPM in internal system
 			decimal2TuneRPM(1500,&server->tune_RPM[0],&server->tune_RPM[1]);
-			
+
 			break;
 
 
 
 
 
-		
+
 
 		default:
 			{ // RPM
 			//uint8_t str[] = { 0x30, 0x35, 0x30, 0x45, 0x20 };
 			//uint8_t str[] = { 0x30, 0x30, 0x43, 0x53, 0x20 };
-			//uint8_t str[] = { 0x30, 0x36, 0x45, 0x5b, 0x20 };		// 5500 RPM uit MAP 
+			//uint8_t str[] = { 0x30, 0x36, 0x45, 0x5b, 0x20 };		// 5500 RPM uit MAP
 			uint8_t str[] = { 0x30, 0x00, 0x00, 0x00, 0x20 };	// MAX RPM 4500????? nee ~5000 RPM
 
-			
-			
+
+
 			str[1]=server->tune_RPM[0];			// read actual values from internal state
 			str[2]=server->tune_RPM[1];
 			TuneSetnewChecksum(str,&str[3]);		// set str[3] checksum
@@ -623,7 +626,7 @@ static bool tune_msrmt_cb(void *user_data)
 			//	uint8_t str[] = { 0x30, 0x30, 0x46, 0x56, 0x20 };	// 800 RPM
 
 
-			//	uint8_t str[] = { 0x30, 0x31, 0x30, 0x41, 0x20 };	// 800 RPM 
+			//	uint8_t str[] = { 0x30, 0x31, 0x30, 0x41, 0x20 };	// 800 RPM
 			//	uint8_t str[] = { 0x30, 0x31, 0x31, 0x42, 0x20 };	// 900+ RPM
 			//	uint8_t str[] = { 0x30, 0x31, 0x33, 0x44, 0x20 };	// 1000-RPM
 			//	uint8_t str[] = { 0x30, 0x31, 0x34, 0x45, 0x20 };	// 1000 RPM
@@ -645,14 +648,14 @@ static bool tune_msrmt_cb(void *user_data)
 
 			//	uint8_t str[] = { 0x30, 0x34, 0x30, 0x44, 0x20 };	// 3200 RPM
 			//	uint8_t str[] = { 0x30, 0x34, 0x38, 0x4c, 0x20 };	// 3600- RPM
-			
+
 			// 	uint8_t str[] = { 0x30, 0x35, 0x30, 0x45, 0x20 };	// 4000 RPM
 			//	uint8_t str[] = { 0x30, 0x35, 0x31, 0x46, 0x20 };	// 4000+ RPM
 			//	uint8_t str[] = { 0x30, 0x35, 0x32, 0x47, 0x20 };	// 4050 RPM
 
 			//	uint8_t str[] = { 0x30, 0x36, 0x30, 0x46, 0x20 };	// 4800 RPM
 
-			//uint8_t str[] = { 0x30, 0x36, 0x45, 0x5b, 0x20 };		// 5500 RPM uit MAP 
+			//uint8_t str[] = { 0x30, 0x36, 0x45, 0x5b, 0x20 };		// 5500 RPM uit MAP
 			//	uint8_t str[] = { 0x30, 0x37, 0x30, 0x47, 0x20 };	// 5600 RPM
 
 			//	uint8_t str[] = { 0x30, 0x38, 0x30, 0x48, 0x20 };	// 6400 RPM
@@ -677,20 +680,20 @@ static bool tune_msrmt_cb(void *user_data)
 			static int j=0x40;
 			//uint8_t str[] = { 0x31, 0x41, 0x30, 0x52, 0x20 };
 			//uint8_t str[] = { 0x31, 0x46, 0x30, 0x57, 0x20 };		// 48,50
-			//uint8_t str[] = { 0x31, 0x40, 0x30, 0x51, 0x20 };       	// 
+			//uint8_t str[] = { 0x31, 0x40, 0x30, 0x51, 0x20 };       	//
 			// uint8_t str[] = { 0x31, 0x30, 0x46, 0x57, 0x20 };		//  3 degrees
 			//uint8_t str[] = { 0x31, 0x31, 0x30, 0x42, 0x20 };       	// 3,25 decgrees
 			//uint8_t str[] = { 0x31, 0x45, 0x31, 0x57, 0x20 };    // 45, 31 == 45 from map command
 			uint8_t str[] = { 0x31, 0x00, 0x00, 0x00, 0x20 };    // 11 degrees from map/vacuum
-			
-			
+
+
 			// JIT update the actual (calcualated) Advance values, before use
 			UpdateRealtimeTuneAdvance(server);
-						
+
 			str[1]=server->tune_Advance[0];			// read actual values from internal state
 			str[2]=server->tune_Advance[1];
 			TuneSetnewChecksum(str,&str[3]);		// set str[3]
-			
+
 			printf("SIMULATE: %s Advance was set to: %2.2f degrees\n",__FUNCTION__,TuneAdvance2decimal(str[1],str[2]));     // test reverse function  (and forward)
 
 
@@ -714,7 +717,7 @@ static bool tune_msrmt_cb(void *user_data)
 			// uint8_t str[] = { 0x31, 0x3e, 0x30, 0x4f, 0x20 };       	// NA!!!!
 			// uint8_t str[] = { 0x31, 0x3f, 0x30, 0x50, 0x20 };       	// NA!!!!
 			// uint8_t str[] = { 0x31, 0x40, 0x30, 0x51, 0x20 };       	// NA!!!!
-			
+
 			// uint8_t str[] = { 0x31, 0x41, 0x30, 0x52, 0x20 };		// 31,8 degrees Advance
 			// uint8_t str[] = { 0x31, 0x41, 0x31, 0x53, 0x20 };		// 32.0 degrees Advance
 			// uint8_t str[] = { 0x31, 0x41, 0x32, 0x54, 0x20 };		// 32,2 degrees Advance
@@ -722,14 +725,14 @@ static bool tune_msrmt_cb(void *user_data)
 			// uint8_t str[] = { 0x31, 0x41, 0x34, 0x56, 0x20 };		// 32,6 degrees Advance
 			// uint8_t str[] = { 0x31, 0x41, 0x35, 0x57, 0x20 };		// 32,8 degrees Advance
 
-			// 
+			//
 			// uint8_t str[] = { 0x31, 0x41, 0x46, 0x68, 0x20 };		// 35.0 degrees Advance
 			// 69 niets...
 			// uint8_t str[] = { 0x31, 0x41, 0x30, 0x52, 0x20 };       // 32--
 			// uint8_t str[] = { 0x31, 0x42, 0x30, 0x53, 0x20 };	// 35.0
 			// uint8_t str[] = { 0x31, 0x43, 0x30, 0x54, 0x20 };	// 38,50
 			// uint8_t str[] = { 0x31, 0x44, 0x30, 0x55, 0x20 };	// 41,5
-			// uint8_t str[] = { 0x31, 0x45, 0x30, 0x56, 0x20 };	// 45 
+			// uint8_t str[] = { 0x31, 0x45, 0x30, 0x56, 0x20 };	// 45
 			// uint8_t str[] = { 0x31, 0x46, 0x30, 0x57, 0x20 };	// 48,50
 
 
@@ -740,10 +743,10 @@ static bool tune_msrmt_cb(void *user_data)
 				//str[2]=i;
 				//str[3]=j;
 				printf("SIMULATE: uint8_t[2][3]=%02X  %02X------------------------------\n",i,j);
-			
+
 				memcpy(pdu,str,len);
 				print_hex(pdu,len);
-			
+
 				bt_gatt_server_send_notification(server->gatt,
 						server->tune_msrmt_handle,
 						pdu, len);
@@ -752,7 +755,7 @@ static bool tune_msrmt_cb(void *user_data)
 			//i++;
 			}
 
-			{ // BAR 
+			{ // BAR
 			//static int i=0x0,j;
 
 			// uint8_t str[] = { 0x32, 0x36,0x34, 0x4c, 0x20 };  //  0 BAR
@@ -769,13 +772,13 @@ static bool tune_msrmt_cb(void *user_data)
 			//uint8_t str[] = { 0x32, 0x36, 0x30, 0x48, 0x20 };	//  - 0,04 BAR of zo (minder dan 1 streekpje, streepje is 0.6BAR
 			uint8_t str[] = { 0x32, 0x00, 0x00, 0x00, 0x20 };	//  empty pressure Frame
 
-			
+
 			//decimal2TunePressure(100 ,&str[1],&str[2]);		// set pressure in kP, 100= 0BAR, 0 = -1 BAR
 
 			//decimal2TunePressure(100 ,&server->tune_Pressure[0],&server->tune_Pressure[1]);		// set Pressure in server internal
 
-			
-			
+
+
 			str[1]=server->tune_Pressure[0];			// read actual values from internal state
 			str[2]=server->tune_Pressure[1];
 
@@ -816,7 +819,7 @@ static bool tune_msrmt_cb(void *user_data)
 			// uint8_t str[] = { 0x31, 0x3e, 0x30, 0x4f, 0x20 };       	// NA!!!!
 			// uint8_t str[] = { 0x31, 0x3f, 0x30, 0x50, 0x20 };       	// NA!!!!
 			// uint8_t str[] = { 0x31, 0x40, 0x30, 0x51, 0x20 };       	// NA!!!!
-			
+
 			// uint8_t str[] = { 0x31, 0x41, 0x30, 0x52, 0x20 };		// 31,8 degrees Advance
 			// uint8_t str[] = { 0x31, 0x41, 0x31, 0x53, 0x20 };		// 32.0 degrees Advance
 			// uint8_t str[] = { 0x31, 0x41, 0x32, 0x54, 0x20 };		// 32,2 degrees Advance
@@ -824,14 +827,14 @@ static bool tune_msrmt_cb(void *user_data)
 			// uint8_t str[] = { 0x31, 0x41, 0x34, 0x56, 0x20 };		// 32,6 degrees Advance
 			// uint8_t str[] = { 0x31, 0x41, 0x35, 0x57, 0x20 };		// 32,8 degrees Advance
 
-			// 
+			//
 			// uint8_t str[] = { 0x31, 0x41, 0x46, 0x68, 0x20 };		// 35.0 degrees Advance
 			// 69 niets...
 			// uint8_t str[] = { 0x31, 0x41, 0x30, 0x52, 0x20 };       // 32--
 			// uint8_t str[] = { 0x31, 0x42, 0x30, 0x53, 0x20 };	// 35.0
 			// uint8_t str[] = { 0x31, 0x43, 0x30, 0x54, 0x20 };	// 38,50
 			// uint8_t str[] = { 0x31, 0x44, 0x30, 0x55, 0x20 };	// 41,5
-			// uint8_t str[] = { 0x31, 0x45, 0x30, 0x56, 0x20 };	// 45 
+			// uint8_t str[] = { 0x31, 0x45, 0x30, 0x56, 0x20 };	// 45
 			// uint8_t str[] = { 0x31, 0x46, 0x30, 0x57, 0x20 };	// 48,50
 
 
@@ -842,10 +845,10 @@ static bool tune_msrmt_cb(void *user_data)
 				//str[2]=i;
 				//str[3]=j;
 				//printf("uint8_t[2][3]=%02X  %02X------------------------------\n",i,j);
-			
+
 				memcpy(pdu,str,len);
 				print_hex(pdu,len);
-			
+
 				bt_gatt_server_send_notification(server->gatt,
 						server->tune_msrmt_handle,
 						pdu, len);
@@ -854,7 +857,7 @@ static bool tune_msrmt_cb(void *user_data)
 			//i++;
 			}
 
-			
+
 
 			{ // 0x33 Temperature
 			// uint8_t str[] = { 0x33, 0x30, 0x30, 0x43, 0x20 };	// -20 (tegen aanslag)
@@ -871,11 +874,11 @@ static bool tune_msrmt_cb(void *user_data)
 
 			//decimal2TuneTemperature(60 ,&str[1],&str[2]);		// celcius
 			//decimal2TuneTemperature(60 ,&server->tune_Temperature[0],&server->tune_Temperature[1]);		// set Temperature in server internal
-			
-			
+
+
 			str[1]=server->tune_Temperature[0];			// read actual values from internal state
 			str[2]=server->tune_Temperature[1];
-			
+
 			TuneSetnewChecksum(str,&str[3]);			// set str[3]
 
 			printf("SIMULATE: %s Temperature was set to: %d Celcius\n",__FUNCTION__,TuneTemperature2decimal(str[1],str[2]));	// test reverse function  (and forward)
@@ -913,13 +916,13 @@ static bool tune_msrmt_cb(void *user_data)
 
 			// Prooved Values
 			//uint8_t str[] = { 0x34, 0x31, 0x30, 0x45, 0x20 };	// uit capture
-			
+
 			if (server->tune_TuningMode_enabled) {
 				str[2]=0x31;	// Enabled Tuning message
 				// str[3]=0x46;	// Enabled Tuning message   CSUM
 			}
 			TuneSetnewChecksum(str,&str[3]);
-			printf("SIMULATE: %s Tuning mode was set to: '%c%c'\n",__FUNCTION__,str[1],str[2]);  
+			printf("SIMULATE: %s Tuning mode was set to: '%c%c'\n",__FUNCTION__,str[1],str[2]);
 
 			len=sizeof(str);
 			memcpy(pdu,str,len);
@@ -941,13 +944,13 @@ static bool tune_msrmt_cb(void *user_data)
 
 			//uint8_t str[] = { 0x35, 0x31, 0x30, 0x47, 0x20 };	// 1,85 Ampere
 			//uint8_t str[] = { 0x35, 0x32, 0x30, 0x47, 0x20 };	// 2,75
-			uint8_t str[] = { 0x35, 0x00, 0x00, 0x20, 0x20 };  
-			
-			
+			uint8_t str[] = { 0x35, 0x00, 0x00, 0x20, 0x20 };
+
+
 			str[1]=server->tune_Ampere[0];			// read actual values from internal state
 			str[2]=server->tune_Ampere[1];
-			
-			
+
+
 			TuneSetnewChecksum(str,&str[3]);			// set str[3]
 
 			printf("SIMULATE: %s Ampere was set to: %1.2f Ampere\n",__FUNCTION__,TuneAmpere2decimal(str[1],str[2]));     // test reverse function  (and forward)
@@ -987,17 +990,17 @@ static bool tune_msrmt_cb(void *user_data)
 			// uint8_t str[] = { 0x41, 0x34, 0x31, 0x56, 0x20 };	// uit capture, 14,3 V
 
 			//decimal2TuneVoltage(14.0 ,&str[1],&str[2]);			// set Voltage
-			
+
 			//uint8_t str[] = { 0x41, 0x34, 0x30, 0x55, 0x20 };	// 14,1V  -> 0x40 ~= 14,1
 			//decimal2TuneVoltage(14.0 ,&server->tune_Voltage[0],&server->tune_Voltage[1]);		// set Temperature in server internal
-			
-			
+
+
 			str[1]=server->tune_Voltage[0];			// read actual values from internal state
 			str[2]=server->tune_Voltage[1];
-			
+
 			TuneSetnewChecksum(str,&str[3]);			// set str[3]
-			
-			
+
+
 			printf("SIMULATE: %s Voltage set to: %1.2f Volt\n",__FUNCTION__,TuneVoltage2decimal(str[1],str[2]));     // test reverse function  (and forward)
 
 
@@ -1005,7 +1008,7 @@ static bool tune_msrmt_cb(void *user_data)
 			len=sizeof(str);
 			memcpy(pdu,str,len);
 			print_hex(pdu,len);
-			
+
 			bt_gatt_server_send_notification(server->gatt,
 						server->tune_msrmt_handle,
 						pdu, len);
@@ -1027,8 +1030,8 @@ static bool tune_msrmt_cb(void *user_data)
 			//server->tune_UNDISCOVERED[1]=str[2];
 			//str[2]=0x41;
 
-			
-			
+
+
 			str[1]=server->tune_UNDISCOVERED[0];			// read actual values from internal state
 			str[2]=server->tune_UNDISCOVERED[1];
 			TuneSetnewChecksum(str,&str[3]);			// set str[3]
@@ -1051,12 +1054,12 @@ static bool tune_msrmt_cb(void *user_data)
 
 
 
-			
+
 			break;
 	}
-	
+
 	//print_hex(pdu,len);
-	
+
 	/*
 	if (expended_present) {
 		pdu[0] |= 0x08;
@@ -1107,7 +1110,7 @@ static void hr_msrmt_ccc_write_cb(struct gatt_db_attribute *attrib,
 {
 	struct server *server = user_data;
 	uint8_t ecode = 0;
-	
+
 	PRLOG("DBG: hr_msrmt_ccc_write_cb %lu\n", len);
 	print_hex(value,len);
 
@@ -1150,7 +1153,7 @@ static void tune_msrmt_ccc_write_cb(struct gatt_db_attribute *attrib,
 {
 	struct server *server = user_data;
 	uint8_t ecode = 0;
-	
+
 	PRLOG("DBG: tune_msrmt_ccc_write_cb %lu\n", len);
 	print_hex(value,len);
 
@@ -1249,16 +1252,16 @@ uint32_t decimal2TuneRPM(uint32_t RPM, uint8_t *MSB, uint8_t *LSB)
 
 	MSB_dec=RPM/MSB_weight;		// div/800
 	LSB_dec=(RPM%MSB_weight)/LSB_Weight;	// rest div/50 (no rounding required, accuracy is 50RPM, rounded to below.
-	
+
 	sprintf(str_m,"%X",MSB_dec);
 	MSB[0]=str_m[0];
 
-	
+
 	sprintf(str_l,"%X",LSB_dec);
 	LSB[0]=str_l[0];
 
 	//printf("%s MSB_dec=%d LSB_dec=%d   MSB=%c LSB=%c str_m=%s str_l=%s\n",__FUNCTION__,  MSB_dec,LSB_dec,  MSB[0],LSB[0],  str_m,str_l);
-	
+
 return(0);
 }
 
@@ -1275,8 +1278,8 @@ uint32_t TunePressure2decimal(uint8_t MSB, uint8_t LSB)
 	str[1]=LSB;
 	str[2]='\0';
 	value=strtol(str,NULL,16);
-	
-	
+
+
 return(value);
 }
 
@@ -1287,13 +1290,13 @@ uint32_t decimal2TunePressure(uint32_t Pressure, uint8_t *MSB, uint8_t *LSB)
 {
 	char str_m[20];			// char string for hex number
 
-	
+
 	sprintf(str_m,"%02X",Pressure);		// No rounding, exact
 	MSB[0]=str_m[0];
 	LSB[0]=str_m[1];
 
 	//printf("%s pressure=%d kP   MSB=%c LSB=%c str_m=%s\n",__FUNCTION__, Pressure,  MSB[0],LSB[0],  str_m);
-	
+
 return(0);
 }
 
@@ -1348,8 +1351,8 @@ int32_t TuneTemperature2decimal(uint8_t MSB, uint8_t LSB)
 	str[1]=LSB;
 	str[2]='\0';
 	value=strtol(str,NULL,16);
-	
-	value-=30;			// emperisch found offset correction value 0 is; -25 on gauge 10 -> -20	
+
+	value-=30;			// emperisch found offset correction value 0 is; -25 on gauge 10 -> -20
 
 return(value);
 }
@@ -1360,7 +1363,7 @@ return(value);
 uint32_t decimal2TuneTemperature(double Temperature, uint8_t *MSB, uint8_t *LSB)
 {
 	char str_m[20];			// char string for hex number
-	
+
 	uint32_t T=ROUND_2_INT(Temperature+30);	// emperisch found offset correction value 0 is; -25 on gauge 10 -> -20. use rounding instead chopping (but more accuracy then 1 degree is not usefull)
 
 	sprintf(str_m,"%02X",T);
@@ -1368,7 +1371,7 @@ uint32_t decimal2TuneTemperature(double Temperature, uint8_t *MSB, uint8_t *LSB)
 	LSB[0]=str_m[1];
 
 	//printf("%s Temperature=%d    MSB=%c LSB=%c str_m=%s\n",__FUNCTION__, T,  MSB[0],LSB[0],  str_m);
-	
+
 return(0);
 
 }
@@ -1383,7 +1386,7 @@ double TuneAmpere2decimal(uint8_t MSB, uint8_t LSB)
 	str[1]=LSB;
 	str[2]='\0';
 	value=strtol(str,NULL,16);
-	
+
 	value/=WeightFactor;			// scaling factor, emperisch
 
 return(value);
@@ -1393,7 +1396,7 @@ return(value);
 uint32_t decimal2TuneAmpere(double Ampere, uint8_t *MSB, uint8_t *LSB)
 {
 	char str_m[20];			// char string for hex number
-	
+
 	double WeightFactor=16/1.85;	// op basis van afgelezen waardes
 	uint32_t A=ROUND_2_INT(Ampere*WeightFactor);		// round instead chop
 
@@ -1402,7 +1405,7 @@ uint32_t decimal2TuneAmpere(double Ampere, uint8_t *MSB, uint8_t *LSB)
 	LSB[0]=str_m[1];
 
 	//printf("%s Ampere=%d A   MSB=%c LSB=%c str_m=%s\n",__FUNCTION__, A,  MSB[0],LSB[0],  str_m);
-	
+
 return(0);
 }
 
@@ -1417,7 +1420,7 @@ double TuneVoltage2decimal(uint8_t MSB, uint8_t LSB)
 	str[1]=LSB;
 	str[2]='\0';
 	value=strtol(str,NULL,16);
-	
+
 	value/=WeightFactor;			// scaling factor, emperisch
 
 return(value);
@@ -1430,17 +1433,17 @@ return(value);
 uint32_t decimal2TuneVoltage(double Voltage, uint8_t *MSB, uint8_t *LSB)
 {
 	char str_m[20];			// char string for hex number
-	
+
 	//double WeightFactor=4*14.0/12.28;		// op basis van afgelezen waardes
 	double WeightFactor=0x40/14.1;			// op basis van 0x24. 00 ~= 14,1V sample ((maar is aan lage kant afgerond door bit granulariteit
-	uint32_t Volt=ROUND_2_INT(Voltage*WeightFactor);	
+	uint32_t Volt=ROUND_2_INT(Voltage*WeightFactor);
 
 	sprintf(str_m,"%02X",Volt);
 	MSB[0]=str_m[0];
 	LSB[0]=str_m[1];
 
 	//printf("%s Volt=%d V (123Tune)  MSB=%c LSB=%c str_m=%s\n",__FUNCTION__, Volt,  MSB[0],LSB[0],  str_m);
-	
+
 return(0);
 }
 
@@ -1456,7 +1459,7 @@ double TuneAdvance2decimal(uint8_t MSB, uint8_t LSB)
 	uint32_t LSB_dec;
 
 	double value;
-	double MSB_weight=3.2/1;        // From readout digital advance curve Scaling MSB != scaling LSB   
+	double MSB_weight=3.2/1;        // From readout digital advance curve Scaling MSB != scaling LSB
 	double LSB_Weight=0.2/1;         // From roudaout advance curve, is not exact due to jump in readout table. 0,2 degrees == 1 bit
 	char str[2];                    // char string for hex number
 
@@ -1467,7 +1470,7 @@ double TuneAdvance2decimal(uint8_t MSB, uint8_t LSB)
 	str[0]=LSB;                     // fill string, to convert a single hex char
 	str[1]='\0';
 	LSB_dec=strtol(str,NULL,16);
-	
+
 	value=MSB_dec*MSB_weight + LSB_dec*LSB_Weight;
 
 return(value);
@@ -1488,16 +1491,16 @@ uint32_t decimal2TuneAdvance(double Advance, uint8_t *MSB, uint8_t *LSB)
 	Advance+=0.001;	//helps natural rounding for positive numbers
 	MSB_dec=Advance/MSB_weight;		// div/800
 	LSB_dec=(Advance-MSB_dec*MSB_weight)/LSB_Weight;	// rest div/50
-	
+
 	sprintf(str_m,"%X",MSB_dec);
 	MSB[0]=str_m[0];
 
-	
+
 	sprintf(str_l,"%X",LSB_dec);
 	LSB[0]=str_l[0];
 
 	//printf("%s MSB_dec=%d LSB_dec=%d   MSB=%c LSB=%c str_m=%s str_l=%s\n",__FUNCTION__,  MSB_dec,LSB_dec,  MSB[0],LSB[0],  str_m,str_l);
-	
+
 return(0);
 
 }
@@ -1510,40 +1513,40 @@ double CalculateAdvanceByRPM(void *user_data)
 	uint32_t RPM=TuneRPM2decimal(server->tune_RPM[0],server->tune_RPM[1]);
 	uint32_t Lower_RPM=0, Upper_RPM;	// Graph points
 	int i;
-	
+
 
 	// calculate number of elements first!!!! <TODO>
 	for(i=0;i<(10-1);i++) {	// 10-1 due to number of zones insted of boundaries
 		Upper_RPM=TuneRPM2decimal(server->tune_AdvanceCurveRPM[i][0],server->tune_AdvanceCurveRPM[i][1]);
-		
+
 		if(i==0 && RPM < Upper_RPM) { // TODO <= ??
 			printf("%s AdvanceCurve before first point adding 0 degrees\n",__FUNCTION__);
 			return(0);	// 0 degrees or inactive until first point on the map
 		}
-		
+
 		// between these points?
 		if((Lower_RPM <= RPM) && (RPM <= Upper_RPM) ) {
 			double Lower_Advance, Upper_Advance, Advance;
-	
+
 			// linear interpolation
-			Upper_Advance=TuneAdvance2decimal(server->tune_AdvanceCurveDegrees[i][0],  server->tune_AdvanceCurveDegrees[i][1]); 
+			Upper_Advance=TuneAdvance2decimal(server->tune_AdvanceCurveDegrees[i][0],  server->tune_AdvanceCurveDegrees[i][1]);
 			if (i==0) {     // prevent i-1=-1 situation while startup for out of range array.
 				// i=0, i-1 <0
                                 Lower_Advance = Upper_Advance;
-			} else {	
+			} else {
 				Lower_Advance=TuneAdvance2decimal(server->tune_AdvanceCurveDegrees[i-1][0],server->tune_AdvanceCurveDegrees[i-1][1]);
 			}
-			
+
 			if ( (Upper_RPM - Lower_RPM) == 0) {
 				// equal, prevend deviding by zero
 				Advance = Lower_Advance; 	// or Upper_Advance, which is the same
 			} else {
-				// cast to double to force franctional devision 
+				// cast to double to force franctional devision
 				Advance = ((double)(RPM-Lower_RPM)/(Upper_RPM-Lower_RPM)) * (Upper_Advance - Lower_Advance) + Lower_Advance;
 			}
-	
-	
-		
+
+
+
 			// wrong, but fot testing simpel just send UPP boundary value.... not the linear calculated value. <TODO>
 			//return(TuneAdvance2decimal(server->tune_AdvanceCurveDegrees[i][0],server->tune_AdvanceCurveDegrees[i][1]));
 
@@ -1551,12 +1554,12 @@ double CalculateAdvanceByRPM(void *user_data)
 
 			return(Advance);
 			}
-		
+
 		// prepare for next round
 		Lower_RPM=Upper_RPM;
 		}
-	
-	
+
+
 
 // dummy to build framework <TODO>
 // 0 when not found, or unforseed/undefined
@@ -1576,36 +1579,36 @@ double CalculateAdvanceByPressure(void *user_data)
         int i;
         uint32_t RPM;
         uint32_t MapCurveStartRPM;
-        
+
         RPM=TuneRPM2decimal(server->tune_RPM[0],server->tune_RPM[1]);
         MapCurveStartRPM=TuneRPM2decimal(server->tune_MapCurveStartRPM[0],server->tune_MapCurveStartRPM[1]);
-        
+
         if(RPM < MapCurveStartRPM) {
         	printf("%s MAPCurve not active RPM<MapCurveStartRPM (%d<%d) adding 0 degrees\n",__FUNCTION__,RPM,MapCurveStartRPM);
-        	
+
         	return(0);
         }
-        
 
 
-        
+
+
 
 
 	// calculate number of elements first!!!! <TODO>
 	for(i=0;i<(10-1);i++) {	// 10-1 due to number of zones insted of boundaries
 		Upper_Pressure=TunePressure2decimal(server->tune_MapCurvePressure[i][0],server->tune_MapCurvePressure[i][1]);
-		
+
 		if(i==0 && Pressure < Upper_Pressure) { // TODO <= ??
 			printf("%s MAPCurve before first point adding 0 degrees\n",__FUNCTION__);
 			return(0);	// 0 degrees or inactive until first point on the map
 		}
-		
+
 		// between these points?
 		if((Lower_Pressure <= Pressure) && (Pressure <= Upper_Pressure) ) {
 			double Lower_Advance, Upper_Advance, Advance;
-		
+
 			// linear interpolation MAP graph
-			Upper_Advance=TuneAdvance2decimal(server->tune_MapCurveDegrees[i][0],  server->tune_MapCurveDegrees[i][1]); 
+			Upper_Advance=TuneAdvance2decimal(server->tune_MapCurveDegrees[i][0],  server->tune_MapCurveDegrees[i][1]);
 
 			if (i==0) {	// prevent i-1=-1 situation while startup for out of range array.
 				// i=0, i-1 <0
@@ -1614,13 +1617,13 @@ double CalculateAdvanceByPressure(void *user_data)
 				//  i-1>=0
 				Lower_Advance=TuneAdvance2decimal(server->tune_MapCurveDegrees[i-1][0],server->tune_MapCurveDegrees[i-1][1]);
 			}
-			
-			// cast to double to force franctional devision 
+
+			// cast to double to force franctional devision
 			// Prevent devision by zero if Upper_Pressure-Lower_Pressure==0
 			if( (Upper_Pressure - Lower_Pressure) ==0) {
 				// Upper_Pressure == Lower_Pressure
 				Advance =  Lower_Advance; 	// or Upper_Advance, which is the same in this case.
-			} else {	
+			} else {
 				// Upper_Pressure != Lower_Pressure
 				Advance = ((double)(Pressure - Lower_Pressure)/(Upper_Pressure - Lower_Pressure)) * (Upper_Advance - Lower_Advance) + Lower_Advance;
 			}
@@ -1632,13 +1635,13 @@ double CalculateAdvanceByPressure(void *user_data)
 
 			return(Advance);
 			}
-		
+
 		// prepare for next round
 		Lower_Pressure=Upper_Pressure;
 		}
-	
 
-	
+
+
 
 // dummy to build framework <TODO>
 // 0 when not found, or unforseed/undefined
@@ -1668,8 +1671,8 @@ void UpdateRealtimeTuneAdvance(void *user_data)
 
 	// Most simplistic for now
 	// read current value
-	//Advance=TuneAdvance2decimal(server->tune_Advance[0],server->tune_Advance[1]); 
-	
+	//Advance=TuneAdvance2decimal(server->tune_Advance[0],server->tune_Advance[1]);
+
 	// Add the Advance based on Vacuum/Advance Graph
 	Advance+=CalculateAdvanceByPressure(server);
 
@@ -1685,7 +1688,7 @@ void UpdateRealtimeTuneAdvance(void *user_data)
 
 
 // Turns bluetooth binary into decimal position No 1 -- 10
-// even numbers are RPM Curve positions times 2 
+// even numbers are RPM Curve positions times 2
 // uneven numbers are Degrees Curve position times 2 +1
 // Curve No 1: RPM 	-> 2 (*2)	// First RPM  fixated on 500, so 2 is illegal
 // Curve No 1: Degrees 	-> 3
@@ -1716,8 +1719,8 @@ uint32_t TuneGraphNo2decimal(uint8_t MSB, uint8_t LSB)
 	str[1]=LSB;
 	str[2]='\0';
 	value=strtol(str,NULL,16);
-	
-	
+
+
 return(value);
 }
 
@@ -1755,12 +1758,16 @@ static void tune_control_point_write_cb(struct gatt_db_attribute *attrib,
 {
 	struct server *server = user_data;
 	uint8_t ecode = 0;
-	
+
 	const uint8_t *value_ptr;       // sometimes a 0x24 is added/prepended, need to filter out
         size_t len_cleaned;     // sometimes a 0x24 is added/prepended, need to filter out
 
+ 			{ // begin 123response logic
         len_cleaned=len;
         value_ptr=value;
+
+        int rx_cmd_found=0;   // counts the cases it is recognized and responded to. and if zero detect unrecognized command.
+
 
         while (len_cleaned>0 && value_ptr[0]==0x24)
         	{
@@ -1771,7 +1778,7 @@ static void tune_control_point_write_cb(struct gatt_db_attribute *attrib,
         	value_ptr++;
                 len_cleaned--;
         	}
-        	
+
           // need to clean tailing 0x24 's tooo (due to new 123 tune software??/new conditions) ???
           // only clean single 0x24 trailing item
           // 2019/01/19 fixup
@@ -1779,9 +1786,14 @@ static void tune_control_point_write_cb(struct gatt_db_attribute *attrib,
           	if(value_ptr[len_cleaned-1]== 0x24)len_cleaned--;
           }
 
-        if(len_cleaned==0) 
+					// there might be a second 0x24 in some cases (pincode change), fixup 2019/01/28
+          if(len_cleaned> 1){
+            if(value_ptr[len_cleaned-1]== 0x24)len_cleaned--;
+          }
+
+        if(len_cleaned==0)
         	goto done;
-        	
+
 
 	//PRLOG("DBG: tune_control_point_write_cb: %lu\n",len);
 	//print_hex(value,len);
@@ -1817,7 +1829,7 @@ done:
 	uint8_t str[] = { 0x0d };
 	//uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };
 	uint8_t str_resp[] = { 0x0d };
-	
+
 	size_t str_len=sizeof(str);
 	size_t str_resp_len=sizeof(str_resp);
 	size_t i;
@@ -1826,14 +1838,15 @@ done:
 		{
 		equal=1;
 		for (i =0 ; i< len_cleaned; i++)
-			if (value_ptr[i] != str[i]) 
+			if (value_ptr[i] != str[i])
 				equal=0;
 		}
 	if(equal == 1)
 		{
+		rx_cmd_found++;
 		printf("%s 1th Command Found----\n",__FUNCTION__);
 		print_hex(value_ptr, len_cleaned);
-		
+
 		// produce an answer... on txUUID
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
@@ -1841,13 +1854,13 @@ done:
 
 
 		}
-		
+
 	}
 
 	// send resuest
 	{
 	//uint8_t str[] = { 0x24, 0x24, 0x0d };
-	//uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };	
+	//uint8_t str[] = { 0x0d, 0x31, 0x30, 0x40, 0x0d };
 	//uint8_t str[] = { 0x31, 0x30, 0x40, 0x0d, 0x24 };
 	uint8_t str[] = { 0x31, 0x30, 0x40, 0x0d };
 	//uint8_t str_resp[] = { 0x0d };
@@ -1855,12 +1868,12 @@ done:
 	//uint8_t str_resp2[] = {0x30, 0x30, 0x20, 0x31, 0x30, 0x20, 0x30, 0x30, 0x20, 0x31, 0x34, 0x20, 0x31, 0x34, 0x20, 0x31, 0x45, 0x20, 0x33, 0x43};
 	//uint8_t str_resp3[] = {0x20, 0x32, 0x34, 0x20, 0x35, 0x35, 0x20, 0x33, 0x43, 0x20, 0x39, 0x36, 0x20, 0x31, 0x30, 0x33, 0x46, 0x33, 0x0d};
 
-	/* Trying to fragmentate did not work! 
-	uint8_t str_resp1[] = {0x0d, 0x31, 0x30, 0x40, 0x0d, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x30, 0x41, 0x20, 0x30, 0x30, 0x20, 0x30, 0x45, 0x20, 
-			       0x30, 0x30, 0x20, 0x31, 0x30, 0x20, 0x30, 0x30, 0x20, 0x31, 0x34, 0x20, 0x31, 0x34, 0x20, 0x31, 0x45, 0x20, 0x33, 0x43, 
+	/* Trying to fragmentate did not work!
+	uint8_t str_resp1[] = {0x0d, 0x31, 0x30, 0x40, 0x0d, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x30, 0x41, 0x20, 0x30, 0x30, 0x20, 0x30, 0x45, 0x20,
+			       0x30, 0x30, 0x20, 0x31, 0x30, 0x20, 0x30, 0x30, 0x20, 0x31, 0x34, 0x20, 0x31, 0x34, 0x20, 0x31, 0x45, 0x20, 0x33, 0x43,
 			       0x20, 0x32, 0x34, 0x20, 0x35, 0x35, 0x20, 0x33, 0x43, 0x20, 0x39, 0x36, 0x20, 0x31, 0x30, 0x33, 0x46, 0x33, 0x0d};
 	*/
-	
+
 	size_t str_len=sizeof(str);
 	size_t i;
 	int equal=0;
@@ -1869,7 +1882,7 @@ done:
 		{
 		equal=1;
 		for (i =0 ; i< len_cleaned; i++)
-			if (value_ptr[i] != str[i]) 
+			if (value_ptr[i] != str[i])
 				equal=0;
 		}
 	if(equal == 1)
@@ -1897,22 +1910,23 @@ done:
 			{ 0x39, 0x36, 0x20 }	// [15] nr7 advance
 			};
 		int csum;		// 3 byte checksum
-	
+
+		rx_cmd_found++;
 		printf("%s 2th Command Found----\n",__FUNCTION__);
 		print_hex(value_ptr, len_cleaned);
-		
+
 		// produce an answer...
-	
+
 		// fill graph under cmd2 with custom values.
 		// Fixed 500 RPM
 		//str_resp1[11]=server->tune_AdvanceCurveRPM[0][0];	// Fixed 500 RPM
 		//str_resp1[12]=server->tune_AdvanceCurveRPM[0][1];
 
 		// overwrite captrued advance with custom value, calculate csum later.
-		all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];	
+		all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];
 		all_initial_values[3][1]=server->tune_AdvanceCurveDegrees[0][1];
 
-	
+
 		// Fill complete unfragmented buffer
 		bytecounter=0;
 		// copy header @ start
@@ -1925,33 +1939,33 @@ done:
 			buffer[bytecounter++]=all_initial_values[i][1]; local_bytecounter++;
 			buffer[bytecounter++]=all_initial_values[i][2]; local_bytecounter++;
 		}
-	
+
 		// copy ID  from request str: 0x31 0x30+sequence 0x40=16 (data len)
-		buffer[bytecounter++]=str[1];	// skip first byte in cmd2, second, third 2 bytes 
-		buffer[bytecounter++]=str[2];	
-	
+		buffer[bytecounter++]=str[1];	// skip first byte in cmd2, second, third 2 bytes
+		buffer[bytecounter++]=str[2];
+
 		csum=0;
 		// calculate checkum, could be integrated in buffer copy above for efficienty, but not for readability.
 		for (i=0;i< sizeof(all_initial_values)/3;i++) {
 			char str_l[20];
 
-			str_l[0]=all_initial_values[i][0]; 
-			str_l[1]=all_initial_values[i][1]; 
+			str_l[0]=all_initial_values[i][0];
+			str_l[1]=all_initial_values[i][1];
 			str_l[2]='\0';
 			csum+=strtol(str_l,NULL,16);
 		}
 		sprintf(csum_hex_str,"%03X",csum);
-	
+
 		// fill csum
 		buffer[bytecounter++]=csum_hex_str[0];
 		buffer[bytecounter++]=csum_hex_str[1];
 		buffer[bytecounter++]=csum_hex_str[2];
-	
+
 		// add termination 0x0d
 		buffer[bytecounter++]=0x0d;	// bytecounter containts the total number of bytes
-	
+
 		printf("%s bytecounter=%d csum=%s\n",__FUNCTION__,bytecounter,csum_hex_str);
-	
+
 
 		// size is 59, fist 20 bytes fragment
 	       bt_gatt_server_send_notification(server->gatt,
@@ -1963,7 +1977,7 @@ done:
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[20], 20);
-               bytecounter-=20;                                 
+               bytecounter-=20;
 		// last fragment
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
@@ -1972,7 +1986,7 @@ done:
 
 
 		}
-		
+
 	}
 
 
@@ -1996,7 +2010,7 @@ done:
 		{
 		equal=1;
 		for (i =0 ; i< len_cleaned; i++)
-			if (value_ptr[i] != str[i]) 
+			if (value_ptr[i] != str[i])
 				equal=0;
 		}
 	if(equal == 1)
@@ -2024,21 +2038,53 @@ done:
 			{ 0x35, 0x41, 0x20 }	// [15] RPM Limit
 			};
 		int csum;		// 3 byte checksum
-	
+
+		rx_cmd_found++;
 		printf("%s 3th Command Found----\n",__FUNCTION__);
 		print_hex(value_ptr, len_cleaned);
-		
+
 		// produce an answer...
-	
+
 		// fill graph under cmd2 with custom values.
 		// Fixed 500 RPM
 		//str_resp1[11]=server->tune_AdvanceCurveRPM[0][0];	// Fixed 500 RPM
 		//str_resp1[12]=server->tune_AdvanceCurveRPM[0][1];
 
 		// overwrite captrued advance with custom value, calculate csum later.
-		//all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];	
+		//all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];
 		//all_initial_values[3][1]=server->tune_AdvanceCurveDegrees[0][1];
-	
+
+          	// DEBUG
+          	//printf("Default/hardcoded initial PINCODE[1] was: %c\n",TunePinCode2char(all_initial_values[6][0],all_initial_values[6][1]));
+          	//printf("Default/hardcoded initial PINCODE[2] was: %c\n",TunePinCode2char(all_initial_values[7][0],all_initial_values[7][1]));
+          	//printf("Default/hardcoded initial PINCODE[3] was: %c\n",TunePinCode2char(all_initial_values[8][0],all_initial_values[8][1]));
+          	//printf("Default/hardcoded initial PINCODE[4] was: %c\n",TunePinCode2char(all_initial_values[9][0],all_initial_values[9][1]));
+
+          	// Set pincode
+          	// Need to dynamic read the pincode, as it gets checked after a pincode change with this cmd 3
+          	all_initial_values[6][0]=server->tune_Pincode[0][0];    // Single Char!!
+          	all_initial_values[6][1]=server->tune_Pincode[0][1];    // Single Char!! "30"=0, "31"=1
+          	all_initial_values[7][0]=server->tune_Pincode[1][0];    // Single Char!!
+          	all_initial_values[7][1]=server->tune_Pincode[1][1];    // Single Char!!
+          	all_initial_values[8][0]=server->tune_Pincode[2][0];    // Single Char!!
+          	all_initial_values[8][1]=server->tune_Pincode[2][1];    // Single Char!!
+          	all_initial_values[9][0]=server->tune_Pincode[3][0];    // Single Char!!
+          	all_initial_values[9][1]=server->tune_Pincode[3][1];    // Single Char!!
+
+          	printf("Dynamic PINCODE[1] was: %c\n",TunePinCode2char(all_initial_values[6][0],all_initial_values[6][1]));
+          	printf("Dynamic PINCODE[2] was: %c\n",TunePinCode2char(all_initial_values[7][0],all_initial_values[7][1]));
+          	printf("Dynamic PINCODE[3] was: %c\n",TunePinCode2char(all_initial_values[8][0],all_initial_values[8][1]));
+          	printf("Dynamic PINCODE[4] was: %c\n",TunePinCode2char(all_initial_values[9][0],all_initial_values[9][1]));
+
+						// Vacuum advance graph Start@RPM
+						all_initial_values[14][0]=server->tune_MapCurveStartRPM[0];    // Single Char!!
+						all_initial_values[14][1]=server->tune_MapCurveStartRPM[1];    // Single Char!!
+
+						// RPM Limit
+						all_initial_values[15][0]=server->tune_RPMLimit[0];    // Single Char!!
+						all_initial_values[15][1]=server->tune_RPMLimit[1];    // Single Char!!
+
+
 		// Fill complete unfragmented buffer
 		bytecounter=0;
 		// copy header @ start
@@ -2051,33 +2097,33 @@ done:
 			buffer[bytecounter++]=all_initial_values[i][1]; local_bytecounter++;
 			buffer[bytecounter++]=all_initial_values[i][2]; local_bytecounter++;
 		}
-	
+
 		// copy ID  from request str: 0x31 0x30+sequence 0x40=16 (data len)
 		buffer[bytecounter++]=str[0];	// first 2 butes in cmd and further
-		buffer[bytecounter++]=str[1];	
-	
+		buffer[bytecounter++]=str[1];
+
 		csum=0;
 		// calculate checkum, could be integrated in buffer copy above for efficienty, but not for readability.
 		for (i=0;i< sizeof(all_initial_values)/3;i++) {
 			char str_l[20];
 
-			str_l[0]=all_initial_values[i][0]; 
-			str_l[1]=all_initial_values[i][1]; 
+			str_l[0]=all_initial_values[i][0];
+			str_l[1]=all_initial_values[i][1];
 			str_l[2]='\0';
 			csum+=strtol(str_l,NULL,16);
 		}
 		sprintf(csum_hex_str,"%03X",csum);
-	
+
 		// fill csum
 		buffer[bytecounter++]=csum_hex_str[0];
 		buffer[bytecounter++]=csum_hex_str[1];
 		buffer[bytecounter++]=csum_hex_str[2];
-	
+
 		// add termination 0x0d
 		buffer[bytecounter++]=0x0d;	// bytecounter containts the total number of bytes
-	
+
 		printf("%s bytecounter=%d csum=%s\n",__FUNCTION__,bytecounter,csum_hex_str);
-	
+
 
 		// size is 59, fist 20 bytes fragment
 	       bt_gatt_server_send_notification(server->gatt,
@@ -2089,14 +2135,14 @@ done:
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[20], 20);
-               bytecounter-=20;                                 
+               bytecounter-=20;
 		// last fragment
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[40],bytecounter );
 
 		}
-		
+
 	}
 
 
@@ -2111,7 +2157,7 @@ done:
 	//uint8_t str_resp2[] = { 0x37, 0x20, 0x31, 0x45, 0x20, 0x33, 0x37, 0x20, 0x32, 0x38, 0x20, 0x33, 0x37, 0x20, 0x35, 0x38, 0x20, 0x30, 0x30, 0x20 };
 	//uint8_t str_resp3[] = { 0x36, 0x34, 0x20, 0x30, 0x30, 0x20, 0x43, 0x38, 0x20, 0x30, 0x30, 0x20, 0x31, 0x32, 0x34, 0x43, 0x31, 0x0d };		// copy original
 	//uint8_t str_resp3[] = { 0x36, 0x34, 0x20, 0x30, 0x30, 0x20, 0x43, 0x38, 0x20, 0x30, 0x30, 0x20, 0x31, 0x32, 0x34, 0x43, 0x31, 0x0d };	// search for 0x43, 0x38, meaning
-	
+
 	size_t str_len=sizeof(str);
 	//size_t str_resp1_len=sizeof(str_resp1);
 	//size_t str_resp2_len=sizeof(str_resp2);
@@ -2123,7 +2169,7 @@ done:
 		{
 		equal=1;
 		for (i =0 ; i< len_cleaned; i++)
-			if (value_ptr[i] != str[i]) 
+			if (value_ptr[i] != str[i])
 				equal=0;
 		}
 	if(equal == 1)
@@ -2133,39 +2179,49 @@ done:
 		unsigned int bytecounter;
 		unsigned int local_bytecounter;
 		uint8_t all_initial_values[][3]={	// the actual value without header/slot
-			{ 0x46, 0x46, 0x20 }, 	// [0]	
+			{ 0x46, 0x46, 0x20 }, 	// [0]
 			{ 0x46, 0x46, 0x20 }, 	// [1]
 			{ 0x30, 0x30, 0x20 }, 	// [2]	nr1 Vacuum Advance graph: abs pressure (vacuum)
 			{ 0x33, 0x37, 0x20 }, 	// [3] 	nr1 Vacuum Advance graph: advance
-			{ 0x31, 0x44, 0x20 }, 	// [4]	nr2 Vacuum Advance graph: abs pressure (vacuum) 	
-			{ 0x33, 0x37, 0x20 }, 	// [5] 	nr2 Vacuum Advance graph: advance 
-			{ 0x31, 0x45, 0x20 }, 	// [6]	nr3 Vacuum Advance graph: abs pressure (vacuum) 
-			{ 0x33, 0x37, 0x20 }, 	// [7] 	nr3 Vacuum Advance graph: advance 
-			{ 0x32, 0x38, 0x20 }, 	// [8]	nr4 Vacuum Advance graph: abs pressure (vacuum) 
-			{ 0x33, 0x37, 0x20 }, 	// [9] 	nr4 Vacuum Advance graph: advance 
-			{ 0x35, 0x38, 0x20 }, 	// [10]	nr5 Vacuum Advance graph: abs pressure (vacuum) 
-			{ 0x30, 0x30, 0x20 }, 	// [11] nr5 Vacuum Advance graph: advance 
-			{ 0x36, 0x34, 0x20 }, 	// [12]	nr6 Vacuum Advance graph: abs pressure (vacuum) 
-			{ 0x30, 0x30, 0x20 }, 	// [13] nr6 Vacuum Advance graph: advance 
-			{ 0x43, 0x38, 0x20 }, 	// [14]	nr7 Vacuum Advance graph: abs pressure (vacuum) 
+			{ 0x31, 0x44, 0x20 }, 	// [4]	nr2 Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x33, 0x37, 0x20 }, 	// [5] 	nr2 Vacuum Advance graph: advance
+			{ 0x31, 0x45, 0x20 }, 	// [6]	nr3 Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x33, 0x37, 0x20 }, 	// [7] 	nr3 Vacuum Advance graph: advance
+			{ 0x32, 0x38, 0x20 }, 	// [8]	nr4 Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x33, 0x37, 0x20 }, 	// [9] 	nr4 Vacuum Advance graph: advance
+			{ 0x35, 0x38, 0x20 }, 	// [10]	nr5 Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x30, 0x30, 0x20 }, 	// [11] nr5 Vacuum Advance graph: advance
+			{ 0x36, 0x34, 0x20 }, 	// [12]	nr6 Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x30, 0x30, 0x20 }, 	// [13] nr6 Vacuum Advance graph: advance
+			{ 0x43, 0x38, 0x20 }, 	// [14]	nr7 Vacuum Advance graph: abs pressure (vacuum)
 			{ 0x30, 0x30, 0x20 }  	// [15] nr7 Vacuum Advance graph: advance
 			};
 		int csum;		// 3 byte checksum
-	
+
+		rx_cmd_found++;
 		printf("%s 4th Command Found----\n",__FUNCTION__);
 		print_hex(value_ptr, len_cleaned);
-		
+
 		// produce an answer...
-	
+
 		// fill graph under cmd2 with custom values.
 		// Fixed 500 RPM
 		//str_resp1[11]=server->tune_AdvanceCurveRPM[0][0];	// Fixed 500 RPM
 		//str_resp1[12]=server->tune_AdvanceCurveRPM[0][1];
 
 		// overwrite captrued advance with custom value, calculate csum later.
-		//all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];	
+		//all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];
 		//all_initial_values[3][1]=server->tune_AdvanceCurveDegrees[0][1];
-	
+
+		// copy internal state tables to 123Tune bloothooth protocol format
+		// n=1 .. 7, array offset=2
+		for(int n=1,i=2;n<=7;n++) {
+			all_initial_values[i][0]=server->tune_MapCurvePressure[n-1][0];
+			all_initial_values[i++][1]=server->tune_MapCurvePressure[n-1][1];
+			all_initial_values[i][0]=server->tune_MapCurveDegrees[n-1][0];
+			all_initial_values[i++][1]=server->tune_MapCurveDegrees[n-1][1];
+		}
+
 		// Fill complete unfragmented buffer
 		bytecounter=0;
 		// copy header @ start
@@ -2178,33 +2234,33 @@ done:
 			buffer[bytecounter++]=all_initial_values[i][1]; local_bytecounter++;
 			buffer[bytecounter++]=all_initial_values[i][2]; local_bytecounter++;
 		}
-	
+
 		// copy ID  from request str: 0x31 0x30+sequence 0x40=16 (data len)
 		buffer[bytecounter++]=str[0];	// first 2 butes in cmd and further
-		buffer[bytecounter++]=str[1];	
-	
+		buffer[bytecounter++]=str[1];
+
 		csum=0;
 		// calculate checkum, could be integrated in buffer copy above for efficienty, but not for readability.
 		for (i=0;i< sizeof(all_initial_values)/3;i++) {
 			char str_l[20];
 
-			str_l[0]=all_initial_values[i][0]; 
-			str_l[1]=all_initial_values[i][1]; 
+			str_l[0]=all_initial_values[i][0];
+			str_l[1]=all_initial_values[i][1];
 			str_l[2]='\0';
 			csum+=strtol(str_l,NULL,16);
 		}
 		sprintf(csum_hex_str,"%03X",csum);
-	
+
 		// fill csum
 		buffer[bytecounter++]=csum_hex_str[0];
 		buffer[bytecounter++]=csum_hex_str[1];
 		buffer[bytecounter++]=csum_hex_str[2];
-	
+
 		// add termination 0x0d
 		buffer[bytecounter++]=0x0d;	// bytecounter containts the total number of bytes
-	
+
 		printf("%s bytecounter=%d csum=%s\n",__FUNCTION__,bytecounter,csum_hex_str);
-	
+
 
 		// size is 59, fist 20 bytes fragment
 	       bt_gatt_server_send_notification(server->gatt,
@@ -2216,13 +2272,13 @@ done:
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[20], 20);
-               bytecounter-=20;                                 
+               bytecounter-=20;
 		// last fragment
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[40],bytecounter );
 		}
-		
+
 	}
 
 	{ // MAP/RPM Advance curve are filled after command 5.
@@ -2236,12 +2292,12 @@ done:
 	//uint8_t str_resp1[] = { 0x31, 0x33, 0x40, 0x0d, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46 };
 	//uint8_t str_resp2[] = { 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20 };
 	//uint8_t str_resp3[] = { 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x46, 0x46, 0x20, 0x31, 0x33, 0x46, 0x46, 0x30, 0x0d };
-	
+
 	size_t str_len=sizeof(str);
 	//size_t str_resp1_len=sizeof(str_resp1);
 	//size_t str_resp2_len=sizeof(str_resp2);
 	//size_t str_resp3_len=sizeof(str_resp3);
-	
+
 
 	size_t i;
 	int equal=0;
@@ -2249,7 +2305,7 @@ done:
 		{
 		equal=1;
 		for (i =0 ; i< len_cleaned; i++)
-			if (value_ptr[i] != str[i]) 
+			if (value_ptr[i] != str[i])
 				equal=0;
 		}
 	if(equal == 1)
@@ -2259,39 +2315,49 @@ done:
 		unsigned int bytecounter;
 		unsigned int local_bytecounter;
 		uint8_t all_initial_values[][3]={	// the actual value without header/slot
-			{ 0x46, 0x46, 0x20 },	// [0]	nr8  Vacuum Advance graph: abs pressure (vacuum)  
+			{ 0x46, 0x46, 0x20 },	// [0]	nr8  Vacuum Advance graph: abs pressure (vacuum)
 			{ 0x46, 0x46, 0x20 }, 	// [1]  nr8 Vacuum Advance graph: advance
-			{ 0x46, 0x46, 0x20 },	// [2]  nr9  Vacuum Advance graph: abs pressure (vacuum) 
-			{ 0x46, 0x46, 0x20 }, 	// [3]  nr9 Vacuum Advance graph: advance 
-			{ 0x46, 0x46, 0x20 },	// [4]  nr10 Vacuum Advance graph: abs pressure (vacuum) 
-			{ 0x46, 0x46, 0x20 }, 	// [5]  nr10 Vacuum Advance graph: advance 
-			{ 0x46, 0x46, 0x20 }, 
-			{ 0x46, 0x46, 0x20 }, 
-			{ 0x46, 0x46, 0x20 }, 
-			{ 0x46, 0x46, 0x20 }, 
-			{ 0x46, 0x46, 0x20 }, 
+			{ 0x46, 0x46, 0x20 },	// [2]  nr9  Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x46, 0x46, 0x20 }, 	// [3]  nr9 Vacuum Advance graph: advance
+			{ 0x46, 0x46, 0x20 },	// [4]  nr10 Vacuum Advance graph: abs pressure (vacuum)
+			{ 0x46, 0x46, 0x20 }, 	// [5]  nr10 Vacuum Advance graph: advance
 			{ 0x46, 0x46, 0x20 },
-			{ 0x46, 0x46, 0x20 }, 
-			{ 0x46, 0x46, 0x20 }, 
-			{ 0x46, 0x46, 0x20 }, 
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
+			{ 0x46, 0x46, 0x20 },
 			{ 0x46, 0x46, 0x20 }
 			};
 		int csum;		// 3 byte checksum
-	
+
+		rx_cmd_found++;
 		printf("%s 5th Command Found----\n",__FUNCTION__);
 		print_hex(value_ptr, len_cleaned);
-		
+
 		// produce an answer...
-	
+
 		// fill graph under cmd2 with custom values.
 		// Fixed 500 RPM
 		//str_resp1[11]=server->tune_AdvanceCurveRPM[0][0];	// Fixed 500 RPM
 		//str_resp1[12]=server->tune_AdvanceCurveRPM[0][1];
 
 		// overwrite captrued advance with custom value, calculate csum later.
-		//all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];	
+		//all_initial_values[3][0]=server->tune_AdvanceCurveDegrees[0][0];
 		//all_initial_values[3][1]=server->tune_AdvanceCurveDegrees[0][1];
-	
+
+    // copy internal state tables to 123Tune bloothooth protocol format
+    // n=8 .. 10, array offset=0
+    for(int n=8,i=0;n<=10;n++) {
+      all_initial_values[i][0]=server->tune_MapCurvePressure[n-1][0];
+      all_initial_values[i++][1]=server->tune_MapCurvePressure[n-1][1];
+      all_initial_values[i][0]=server->tune_MapCurveDegrees[n-1][0];
+      all_initial_values[i++][1]=server->tune_MapCurveDegrees[n-1][1];
+    }
+
 		// Fill complete unfragmented buffer
 		bytecounter=0;
 		// copy header @ start
@@ -2304,33 +2370,33 @@ done:
 			buffer[bytecounter++]=all_initial_values[i][1]; local_bytecounter++;
 			buffer[bytecounter++]=all_initial_values[i][2]; local_bytecounter++;
 		}
-	
+
 		// copy ID  from request str: 0x31 0x30+sequence 0x40=16 (data len)
 		buffer[bytecounter++]=str[0];	// first 2 butes in cmd and further
-		buffer[bytecounter++]=str[1];	
-	
+		buffer[bytecounter++]=str[1];
+
 		csum=0;
 		// calculate checkum, could be integrated in buffer copy above for efficienty, but not for readability.
 		for (i=0;i< sizeof(all_initial_values)/3;i++) {
 			char str_l[20];
 
-			str_l[0]=all_initial_values[i][0]; 
-			str_l[1]=all_initial_values[i][1]; 
+			str_l[0]=all_initial_values[i][0];
+			str_l[1]=all_initial_values[i][1];
 			str_l[2]='\0';
 			csum+=strtol(str_l,NULL,16);
 		}
 		sprintf(csum_hex_str,"%03X",csum);
-	
+
 		// fill csum
 		buffer[bytecounter++]=csum_hex_str[0];
 		buffer[bytecounter++]=csum_hex_str[1];
 		buffer[bytecounter++]=csum_hex_str[2];
-	
+
 		// add termination 0x0d
 		buffer[bytecounter++]=0x0d;	// bytecounter containts the total number of bytes
-	
+
 		printf("%s bytecounter=%d csum=%s\n",__FUNCTION__,bytecounter,csum_hex_str);
-	
+
 
 		// size is 59, fist 20 bytes fragment
 	       bt_gatt_server_send_notification(server->gatt,
@@ -2342,17 +2408,17 @@ done:
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[20], 20);
-               bytecounter-=20;                                 
+               bytecounter-=20;
 		// last fragment
 	       bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 &buffer[40],bytecounter );
 		}
-		
-	} 
+
+	}
 
 	{ // All Meter value_ptrs show up after command 6  !!!
-	
+
 	//static uint_8 ub = 0x37;
 	//static uint_8 lb = 0x46;
 	// values start showing up after this repeated exected reguest/response
@@ -2373,7 +2439,7 @@ done:
         //                        [request 3Bytes]   [Volt 2Byt],[Temp 2Byt], [BAR 2Byte] BAR?  BAR?   ??     '1'   '0'   ??    '4'   '5'     ??
 	//uint8_t str_resp2[] = {  };
 	//uint8_t str_resp3[] = {  };
-	
+
 	size_t str_len=sizeof(str);
 	//size_t str_resp2_len=sizeof(str_resp2);
 	//size_t str_resp3_len=sizeof(str_resp3);
@@ -2385,37 +2451,36 @@ done:
 		{
 		equal=1;
 		for (i =0 ; i< len_cleaned; i++)
-			if (value_ptr[i] != str[i]) 
+			if (value_ptr[i] != str[i])
 				equal=0;
 		}
 	if(equal == 1)
 		{
 		unsigned int bytecounter;
 
-		uint8_t str_resp1[] =   { 
+		uint8_t str_resp1[] =   {
 			0x76, 0x40, 0x0d,	// the optional trailing 0x24 must NOT be added....
 			0x34, 0x33, 		// [3][4] Voltage
 			0x34, 0x39, 		// [5][6] Temperature
 			0x37, 0x34, 		// [7][8] Pressure
-			0x34, 0x39, 0x2d, 	// Unknown	
-			0x31, 0x30, 0x2d, 	// Unknown
-			0x34, 0x35, 0x20 	// Unknown
+			0x34, 0x31, 0x2d, 0x31, 0x30, 0x2d, 0x34, 0x35, 0x20  // Version: '41-10-45 '
 			};
 		size_t str_resp1_len=sizeof(str_resp1);
 
-		bytecounter=3;//len_cleaned;
+		bytecounter=str_len;//len_cleaned == str_len;
 
-		decimal2TuneVoltage(14.0, &server->tune_Voltage[0],&server->tune_Voltage[1]);
+		//
+		//decimal2TuneVoltage(13.0, &server->tune_Voltage[0],&server->tune_Voltage[1]);
 
 		str_resp1[bytecounter++] = server->tune_Voltage[0];                 // read actual value MSB from internal state
 		str_resp1[bytecounter++] = server->tune_Voltage[1];			// read actual value LSB from internal state
 
-		decimal2TuneTemperature(35 ,&server->tune_Temperature[0],&server->tune_Temperature[1]);
-		
+		//decimal2TuneTemperature(70 ,&server->tune_Temperature[0],&server->tune_Temperature[1]);
+
 		str_resp1[bytecounter++] = server->tune_Temperature[0];             // read actual value MSB from internal state
 		str_resp1[bytecounter++] = server->tune_Temperature[1];		// read actual value LSB from internal state
 
-		decimal2TunePressure(150, &server->tune_Pressure[0],&server->tune_Pressure[1]);
+		//decimal2TunePressure(200, &server->tune_Pressure[0],&server->tune_Pressure[1]);
 		str_resp1[bytecounter++] = server->tune_Pressure[0];             	// read actual value MSB from internal state
 		str_resp1[bytecounter++] = server->tune_Pressure[1];		// read actual value LSB from internal state
 
@@ -2423,17 +2488,22 @@ done:
 		//str_resp1[bytecounter++] = server->tune_Temperature[0];             // read actual value MSB from internal state
 		//str_resp1[bytecounter++] = server->tune_Temperature[1];		// read actual value LSB from internal state
 
+		#define P123TUNE_Device_Version "41-10-45 "
+
+		strncpy((char*)&str_resp1[bytecounter],P123TUNE_Device_Version,sizeof(P123TUNE_Device_Version));
+
 		printf("%s Temperature %d Celcius\n",__FUNCTION__,TuneTemperature2decimal(server->tune_Temperature[0],server->tune_Temperature[1]));	// test reverse function  (and forward)
 
+		rx_cmd_found++;
 		printf("%s 6th Command Found----\n",__FUNCTION__);
 		print_hex(value_ptr, len_cleaned);
-		
+
 		// produce an answer...
 	        bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
                                                 str_resp1, str_resp1_len);
 		}
-		
+
 	}
 
 
@@ -2448,55 +2518,58 @@ done:
 		//static uint8_t tune_Advance_bck[2];	// TODO, needs to based on graph
 		switch(value_ptr[0]) {
 			case 0x61:	// + in Tuning mode (Advance)
+				rx_cmd_found++;
 				printf("%s Tuning mode + Found\n",__FUNCTION__);
 				server->tune_TuningMode_Advance++;
-				
+
 				// Direct modify advance, need to changed later, based on curve [TODO]
 				// decimal2TuneAdvance( TuneAdvance2decimal(server->tune_Advance[0],server->tune_Advance[1])   + 1.0  ,&server->tune_Advance[0],&server->tune_Advance[1]);
-				
+
 				// Directly modify tune_TuningMode_Advance, and keep away from actual server->tune_Advance[] value
 				//decimal2TuneAdvance( TuneAdvance2decimal(server->tune_TuningMode_Advance[0],server->tune_TuningMode_Advance[1])   + 1.0  ,&server->tune_TuningMode_Advance[0],&server->tune_TuningMode_Advance[1]);
-				
+
 				break;
 			case 0x72:	// - in Tuning mode (Advance)
+				rx_cmd_found++;
 				printf("%s Tuning mode - Found\n",__FUNCTION__);
 				server->tune_TuningMode_Advance--;
 
 				// Direct modify advance, need to changed later, based on curve [TODO]
 				//decimal2TuneAdvance( TuneAdvance2decimal(server->tune_Advance[0],server->tune_Advance[1])   - 1.0  ,&server->tune_Advance[0],&server->tune_Advance[1]);
-				
+
 				// Directly modify tune_TuningMode_Advance, and keep away from actual server->tune_Advance[] value
 				//decimal2TuneAdvance( TuneAdvance2decimal(server->tune_TuningMode_Advance[0],server->tune_TuningMode_Advance[1])   - 1.0  ,&server->tune_TuningMode_Advance[0],&server->tune_TuningMode_Advance[1]);
-				
-				
+
+
 				break;
 			case 0x74: 	// Toggle Tuning mode
 				// TODO needs to be modyfied for using graphs
+				rx_cmd_found++;
 				printf("%s Tuning mode Toggle Found\n",__FUNCTION__);
 				if(!server->tune_TuningMode_enabled) {
 					// Enable
 					// Start always at 0
 					//decimal2TuneAdvance(0 ,&server->tune_TuningMode_Advance[0],&server->tune_TuningMode_Advance[1]);
 					server->tune_TuningMode_Advance=0;
-					
+
 				} else { 	// restore state
 					// Disable
 					// setting to 0 is attractive, but it's simply a don't care when it's not enabled.
 					// other code shoud honor 'server->tune_TuningMode_enabled'
 					// decimal2TuneAdvance(0 ,&server->tune_TuningMode_Advance[0],&server->tune_TuningMode_Advance[1]);
 				}
-				
+
 				server->tune_TuningMode_enabled = !server->tune_TuningMode_enabled;	//Toggle status boolean
 				break;
 			default:	// do not touch this
 				break;
-				
+
 			}
 		// no response other then acknowledgement
 		}
 	}
-	
-	
+
+
 
 
 	// write curve/map implementation 2017/02/07
@@ -2505,13 +2578,13 @@ done:
 	//uint8_t str_resp1[] =   { 0x31, 0x30, 0x2D, 0x30, 0x30, 0x34, 0x0D };
 	//const uint8_t *value_ptr;	// sometimes a 0x24 is added/prepended, need to filter out
 	//size_t len_cleaned;	// sometimes a 0x24 is added/prepended, need to filter out
-	
+
 	//len_cleaned=len;
 	//value_ptr=value;
-	
+
 	//size_t str_len=sizeof(str);
 	//size_t str_resp1_len=sizeof(str_resp1);
-	
+
 	// prepending cleanup is done in the beginning of this function
 	if( len == 8 && value_ptr[0] == 0x24) {	// skip first 0x24 when strings still meets expectations
 		value_ptr++;
@@ -2522,13 +2595,13 @@ done:
 		//value_ptr++;
 		len_cleaned--;
 	}
-	
+
 	//size_t i;
 	//int equal=0;
 	if (len_cleaned == 7)	// 7 chars, or more chars (uncleaned)
 		{
 		int nr;		// graph index number 1 .. 10
-		if ( value_ptr[2] == 0x2D && value_ptr[3] == 0x30 && value_ptr[6] == 0x0D )	// 
+		if ( value_ptr[2] == 0x2D && value_ptr[3] == 0x30 && value_ptr[6] == 0x0D )	//
 		 {
 		 switch (value_ptr[4]) {
 			case 0x30:	// Advance curve Remove Command ????
@@ -2542,11 +2615,30 @@ done:
 		 			case 0x41:	// Advance graps entries: No 5
 		 			case 0x43:      // Advance graps entries: No 6
 		 			case 0x45:      // Advance graps entries: No 7
+						rx_cmd_found++;
 		 				nr=TuneGraphNo2decimal(value_ptr[4],value_ptr[5])/2;
 		 				printf("%02X (ADD)RPM value %04d rpm at curve postion No: %d\n",value_ptr[5],TuneRPM2decimal(value_ptr[0],value_ptr[1]), nr );
 						// Store new value in internal server state: range checking should be done here
 						server->tune_AdvanceCurveRPM[nr -1][0]=value_ptr[0];
 						server->tune_AdvanceCurveRPM[nr -1][1]=value_ptr[1];
+
+						// fill rest with N/A values
+						if(TuneRPM2decimal(value_ptr[0], value_ptr[1]) == 8000) {
+							// the number of degrees is variable, do not fixate this
+							//decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr - 1][0],&server->tune_MapCurveDegrees[nr - 1][1]);
+
+							// re-use n variabele (as it has exactly the right value to start with) to finish aand fill the rest with default valuses
+							for(; nr < C_nr_123MapCurve_Elements;nr++) {
+								// "0xFF" = 0x46,0x46
+								server->tune_AdvanceCurveRPM[nr][0] = 0x46;  // "0xG " == N/A
+								server->tune_AdvanceCurveRPM[nr][1] = 0x46; // "0x G" == N/A
+								server->tune_AdvanceCurveDegrees[nr][0] = 0x46;  // "0xG " == N/A
+								server->tune_AdvanceCurveDegrees[nr][1] = 0x46; // "0x G"  == N/A
+								//decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr][0],&server->tune_MapCurveDegrees[nr][1]);
+							}
+						}
+
+
 		 				break;
 					case 0x33:      // Degrees: no 1
 		 			case 0x35:	// Degrees: no 2
@@ -2555,6 +2647,7 @@ done:
 		 			case 0x42:      // Degrees: no 5
 		 			case 0x44:      // Degrees: no 6
 		 			case 0x46:      // Degrees: no 7
+						rx_cmd_found++;
 		 				nr=(TuneGraphNo2decimal(value_ptr[4],value_ptr[5])-1)/2;
 						printf("%02X (ADD)Advance value %02.2f degrees at curve postion No: %d\n",value_ptr[5],TuneAdvance2decimal(value_ptr[0],value_ptr[1]), nr );
 						// Store new value in internal server state: range checking should be done here
@@ -2575,21 +2668,40 @@ done:
 		 	case 0x31:	// Advance Curve ???
 		 		// 35 35 2D 30 31 41 0D Immobilizer ON
 		 		// 41 41 2D 30 31 41 0D Immobilizer Off
-		 		
+
 		 		printf("%02X Advance Curve Command Found: ",value_ptr[4]);
 		 		switch (value_ptr[5]) {
 		 			case 0x30:	// Advance graps entries: No 8
-		 			case 0x32:	// Advance graps entries: No 9 
+		 			case 0x32:	// Advance graps entries: No 9
 		 			case 0x34:	// Advance graps entries: No 10, is created automatically by app when enough points are inserted
+						rx_cmd_found++;
 		 				nr=TuneGraphNo2decimal(value_ptr[4],value_ptr[5])/2 ;
 		 				printf("%02X (ADD)RPM value %04d rpm at curve postion No: %d\n",value_ptr[5],TuneRPM2decimal(value_ptr[0],value_ptr[1]), nr );
 						// Store new value in internal server state: range checking should be done here
 						server->tune_AdvanceCurveRPM[nr -1][0]=value_ptr[0];
 						server->tune_AdvanceCurveRPM[nr -1][1]=value_ptr[1];
+
+						// fill rest with N/A values
+						if(TuneRPM2decimal(value_ptr[0], value_ptr[1]) == 8000) {
+							// the number of degrees is variable, do not fixate this
+							//decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr - 1][0],&server->tune_MapCurveDegrees[nr - 1][1]);
+
+							// re-use n variabele (as it has exactly the right value to start with) to finish aand fill the rest with default valuses
+							for(; nr < C_nr_123MapCurve_Elements;nr++) {
+								// "0xFF" = 0x46,0x46
+								server->tune_AdvanceCurveRPM[nr][0] = 0x46;  // "0xG " == N/A
+								server->tune_AdvanceCurveRPM[nr][1] = 0x46; // "0x G" == N/A
+								server->tune_AdvanceCurveDegrees[nr][0] = 0x46;  // "0xG " == N/A
+								server->tune_AdvanceCurveDegrees[nr][1] = 0x46; // "0x G"  == N/A
+								//decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr][0],&server->tune_MapCurveDegrees[nr][1]);
+							}
+						}
+
 		 				break;
 		 			case 0x31:      // Degrees: no 8
 					case 0x33:	// Degrees: no 9
 					case 0x35:      // Degrees: no 10
+						rx_cmd_found++;
 						nr=(TuneGraphNo2decimal(value_ptr[4],value_ptr[5])-1)/2;
 						printf("%02X (ADD)Advance value %02.2f degrees at curve postion No: %d\n",value_ptr[5],TuneAdvance2decimal(value_ptr[0],value_ptr[1]), nr );
 						// Store new value in internal server state: range checking should be done here
@@ -2605,30 +2717,35 @@ done:
 					case 0x37:
 					case 0x38:
 					case 0x39:	// and 0x40 perhaps ???? no more then 4 char's are allowed in 123-app... 0x40 may be used for something else.
+						rx_cmd_found++;
 						printf("%02X PINSET[%d]=\'%c\'\n",value_ptr[5], value_ptr[5]-0x36 ,TunePinCode2char(value_ptr[0],value_ptr[1]) );
 						// store value in internal server
 						server->tune_Pincode[value_ptr[5]-0x36][0]=value_ptr[0];
 						server->tune_Pincode[value_ptr[5]-0x36][1]=value_ptr[1];
 						break;
-		 			
+
 		 			case 0x41:
 		 				// 35 35 2D 30 31 41 0D
 		 				if ( (value_ptr[0]==0x35) && (value_ptr[1]==0x35) ) {
+							rx_cmd_found++;
 			 				printf("%02X IMMOBILIZER: ON\n",value_ptr[5] );
 			 				server->tune_IMMOBILIZED = true;
 			 				}
 						// 41 41 2D 30 31 41 0D
 		 				if ( (value_ptr[0]==0x41) && (value_ptr[1]==0x41) ) {
+							rx_cmd_found++;
 			 				printf("%02X IMMOBILIZER: OFF \n",value_ptr[5] );
 			 				server->tune_IMMOBILIZED = false;
 			 				}
 						break;
 		 			case 0x45:
+						rx_cmd_found++;
 		 				printf("%02X Starts@RPM value %04d rpm\n",value_ptr[5],TuneRPM2decimal(value_ptr[0],value_ptr[1]) );
 		 				server->tune_MapCurveStartRPM[0]=value_ptr[0];
 		 				server->tune_MapCurveStartRPM[1]=value_ptr[1];
 		 				break;
 		 			case 0x46:
+						rx_cmd_found++;
 		 				printf("%02X MAX RPM value %04d rpm\n",value_ptr[5],TuneRPM2decimal(value_ptr[0],value_ptr[1]) );
 		 				server->tune_RPMLimit[0]=value_ptr[0];
 		 				server->tune_RPMLimit[1]=value_ptr[1];
@@ -2637,7 +2754,7 @@ done:
 						printf("UNKNOWN\n");
 						break;
 		 		}
-		 		
+
 				print_hex(value_ptr, len_cleaned);
 				bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
@@ -2650,18 +2767,43 @@ done:
 		 		// Pos 1 -> 35, 2 -> 37 ...
 
 		 		switch (value_ptr[5]) {
-		 					// can't adjust no 1 
+		 					// can't adjust no 1
 		 			case 0x34:	// Advance graps entries: No 2
 		 			case 0x36:	// Advance graps entries: No 3
 		 			case 0x38:	// Advance graps entries: No 4
 		 			case 0x41:	// Advance graps entries: No 5
 		 			case 0x43:      // Advance graps entries: No 6
 		 			case 0x45:      // Advance graps entries: No 7
+						rx_cmd_found++;
 		 				nr=TuneGraphNo2decimal(value_ptr[4]-2,value_ptr[5])/2; // graph starts @ ofsset of 2, uneven numbers
-		 				printf("%02X (ADD)pressure value %04d kP at curve postion No: %d\n",value_ptr[5],TunePressure2decimal(value_ptr[0],value_ptr[1]), nr  ); 
+		 				printf("%02X (ADD)pressure value %04d kP at curve postion No: %d\n",value_ptr[5],TunePressure2decimal(value_ptr[0],value_ptr[1]), nr  );
 						// Store new value in internal server state: range checking should be done here
 						server->tune_MapCurvePressure[nr -1][0]=value_ptr[0];
 						server->tune_MapCurvePressure[nr -1][1]=value_ptr[1];
+
+
+            // 100, has always 0 Degrees
+            // 200, has always 0 degrees, and is the last one. next array elements should be filled with "0xFF";
+
+            if(TunePressure2decimal(value_ptr[0], value_ptr[1]) == 100) {
+              // No need to enforce the 0.0, client software does
+              //decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr - 1][0],&server->tune_MapCurveDegrees[nr - 1][1]);
+            }
+            if(TunePressure2decimal(value_ptr[0], value_ptr[1]) == 200) {
+              // the number of degrees is variable, do not fixate this
+              //decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr - 1][0],&server->tune_MapCurveDegrees[nr - 1][1]);
+
+              // re-use n variabele (as it has exactly the right value to start with) to finish aand fill the rest with default valuses
+              for(; nr < C_nr_123MapCurve_Elements;nr++) {
+                // "0xFF" = 0x46,0x46
+                server->tune_MapCurvePressure[nr][0] = 0x46;  // "0xG " == N/A
+                server->tune_MapCurvePressure[nr][1] = 0x46; // "0x G" == N/A
+                server->tune_MapCurveDegrees[nr][0] = 0x46;  // "0xG " == N/A
+                server->tune_MapCurveDegrees[nr][1] = 0x46; // "0x G"  == N/A
+                //decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr][0],&server->tune_MapCurveDegrees[nr][1]);
+              }
+            }
+
 		 				break;
 					case 0x33:      // Degrees: no 1
 		 			case 0x35:	// Degrees: no 2
@@ -2670,6 +2812,7 @@ done:
 		 			case 0x42:      // Degrees: no 5
 		 			case 0x44:      // Degrees: no 6
 		 			case 0x46:      // Degrees: no 7
+						rx_cmd_found++;
 		 				nr=(TuneGraphNo2decimal(value_ptr[4]-2,value_ptr[5])-1)/2; // graph starts @ ofsset of 2, uneven numbers
 		 				printf("%02X (ADD)Crankshaft value %02.2f degrees at curve postion No: %d\n",value_ptr[5],TuneAdvance2decimal(value_ptr[0],value_ptr[1]), nr  );
 						// Store new value in internal server state: range checking should be done here
@@ -2694,20 +2837,46 @@ done:
 				// 30:30:2d:30:32:44:0d
 				// 43:38:2d:30:32:45:0d
 		 		printf("%s Vacuum MAP Curve Command Found----\n",__FUNCTION__);
-		 		
+
 		 		switch (value_ptr[5]) {
 		 			case 0x30:	// Advance graps entries: No 8
-		 			case 0x32:	// Advance graps entries: No 9 
+		 			case 0x32:	// Advance graps entries: No 9
 		 			case 0x34:	// Advance graps entries: No 10, is created automatically by app when enough points are inserted
+						rx_cmd_found++;
 		 				nr=TuneGraphNo2decimal(value_ptr[4]-2,value_ptr[5])/2;// graph starts @ ofsset of 2, uneven numbers
 		 				printf("%02X (ADD)pressure value %04d kP at curve postion No: %d\n",value_ptr[5],TunePressure2decimal(value_ptr[0],value_ptr[1]), nr  );
 						// Store new value in internal server state: range checking should be done here
 						server->tune_MapCurvePressure[nr -1][0]=value_ptr[0];
 						server->tune_MapCurvePressure[nr -1][1]=value_ptr[1];
+
+
+            // 100, has always 0 Degrees
+            // 200, has always 0 degrees, and is the last one. next array elements should be filled with "0xFF";
+
+            if(TunePressure2decimal(value_ptr[0], value_ptr[1]) == 100) {
+              // No need to enforce the 0.0, client software does
+              //decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr - 1][0],&server->tune_MapCurveDegrees[nr - 1][1]);
+            }
+            if(TunePressure2decimal(value_ptr[0], value_ptr[1]) == 200) {
+              // the number of degrees is variable, do not fixate this
+              //decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr - 1][0],&server->tune_MapCurveDegrees[nr - 1][1]);
+
+              // re-use n variabele (as it has exactly the right value to start with) to finish aand fill the rest with default valuses
+              for(; nr < C_nr_123MapCurve_Elements;nr++) {
+                // "0xFF" = 0x46,0x46
+                server->tune_MapCurvePressure[nr][0] = 0x46;  // "0xG " == N/A
+                server->tune_MapCurvePressure[nr][1] = 0x46; // "0x G" == N/A
+                server->tune_MapCurveDegrees[nr][0] = 0x46;  // "0xG " == N/A
+                server->tune_MapCurveDegrees[nr][1] = 0x46; // "0x G"  == N/A
+                //decimal2TuneAdvance(0.0,&server->tune_MapCurveDegrees[nr][0],&server->tune_MapCurveDegrees[nr][1]);
+              }
+            }
+
 		 				break;
 		 			case 0x31:      // Degrees: no 8
 					case 0x33:	// Degrees: no 9
 					case 0x35:      // Degrees: no 10
+						rx_cmd_found++;
 						nr=(TuneGraphNo2decimal(value_ptr[4]-2,value_ptr[5])-1)/2 ;  // graph starts @ ofsset of 2, uneven numbers
 		 				printf("%02X (ADD)Crankshaft value %02.2f degrees at curve postion No: %d\n",value_ptr[5],TuneAdvance2decimal(value_ptr[0],value_ptr[1]), nr );
 						// Store new value in internal server state: range checking should be done here
@@ -2719,10 +2888,10 @@ done:
 						break;
 		 		}
 
-		 		
-		 		
-		 		
-		 		
+
+
+
+
 				print_hex(value_ptr, len_cleaned);
 				bt_gatt_server_send_notification(server->gatt,
                                                 server->tune_msrmt_handle,
@@ -2733,16 +2902,34 @@ done:
 			default:
 				printf("UNKNOWN\n");
 				break;
-		  }
-		 
-		 }
-		 }
-	}
-	
+		  } // switch (value_ptr[4])
+		} // if ( value_ptr[2] == 0x2D && value_ptr[3] == 0x30 && value_ptr[6] == 0x0D )
+	 } // if (len_cleaned == 7)
+	} // write curve/map implementation 2017/02/07
 
+          // check if we missed a command
+          if(len_cleaned>0) {
+            if(rx_cmd_found==0){
+                        printf("UNKNOWN cmd received!!!\n");
+                        print_hex(value_ptr, len_cleaned);
+                        //delay(4000);
+                        sleep(4);
+            }
+            if(rx_cmd_found==0){
+                        printf("cmd received and it was decode\n");
+                        print_hex(value_ptr, len_cleaned);
+            }
+            if(rx_cmd_found>1){
+                        printf("cmd is decoded by multiple (%d) code blocks, this MUST be wrong!!!\n",rx_cmd_found);
+                        print_hex(value_ptr, len_cleaned);
+                        //delay(4000);
+                        sleep(4);
+            }
+          } else {
+              printf("Decoded as keepalive/empty command\n");
+          }
 
-
-
+				} // end begin 123response logic
 }
 
 static void confirm_write(struct gatt_db_attribute *attr, int err,
@@ -2891,46 +3078,46 @@ static void populate_tune_service(struct server *server)
 	bt_uuid_t uuid;
 	struct gatt_db_attribute *service, *body, *tune_msrmt;
 	//struct gatt_db_attribute *hr_msrmt;
-	
+
 	// See http://www.byteworks.us/Byte_Works/Blog/Entries/2012/12/28_Build_Your_Own_Bluetooth_low_energy_based_circuits_using_the_Blue_Radios_BR-XB-LE4.0-S2.html
 	// which probably has taken as literal example by 123Tune developer
-	
+
 	// 0xDA2B84F1627948DEBDC0AFBEA0226079
 	// DA2B84F1-6279-48DE-BDC0-AFBEA0226079
 	// service uuid
 	// from byteworks example: blueRadiosUUID$ = "DA2B84F1-6279-48DE-BDC0-AFBEA0226079"
-	// BR-XB-LE4.0-S2 service BRSP "Blue Radio Serial Port" 
-	const uint128_t u128_BRSP_Service = { 
+	// BR-XB-LE4.0-S2 service BRSP "Blue Radio Serial Port"
+	const uint128_t u128_BRSP_Service = {
 		.data = { 0xDA, 0x2B, 0x84, 0xF1, 0x62, 0x79, 0x48, 0xDE, 0xBD, 0xC0, 0xAF, 0xBE, 0xA0, 0x22, 0x60, 0x79} };
 
 	// 99564a02-dc01-4d3c-b04e-3bb1ef0571b2
 	// read
 	// from byteworks example: infoUUID$ = "99564A02-DC01-4D3C-B04E-3BB1EF0571B2"
-	const uint128_t u128_info = { 
+	const uint128_t u128_info = {
 		.data = { 0x99, 0x56, 0x4A, 0x02, 0xDC, 0x01, 0x4D, 0x3C, 0xB0, 0x4E, 0x3B, 0xB1, 0xEF, 0x05, 0x71, 0xB2} };
 
 	// 03:00:02:18:00:1a:00:1c:00:1d:00:1f:00:21:00:22:00 (for easy finding it back from wireshark)
 	uint8_t body_info[] = { 0x03, 0x00, 0x02, 0x18, 0x00, 0x1a, 0x00, 0x1c, 0x00, 0x1d, 0x00, 0x1f, 0x00, 0x21, 0x00, 0x22, 0x00};
 	//uint8_t body_loc_b271[] = { 0x00};
-	
+
 	// a87988b9-694c-479c-900e-95dfa6c00a24
 	// read/write
 	// from byteworks example: modeUUID$ = "A87988B9-694C-479C-900E-95DFA6C00A24"
-	const uint128_t u128_modeUUID = { 
+	const uint128_t u128_modeUUID = {
 		.data = { 0xA8, 0x79, 0x88, 0xB9, 0x69, 0x4C, 0x47, 0x9C, 0x90, 0x0E, 0x95, 0xDF, 0xA6, 0xC0, 0x0A, 0x24} };
-		
+
 	uint8_t body_mode = 1;  /* "Chest" */  //only used  at startign 123tune and exitting
 
 	// bf03260c-7205-4c25-af43-93b1c299d159
 	// Write
 	// from byteworks example: rxUUID$ = "BF03260C-7205-4C25-AF43-93B1C299D159"
-	const uint128_t u128_rxUUID = { 
+	const uint128_t u128_rxUUID = {
 		.data = { 0xBF, 0x03, 0x26, 0x0C, 0x72, 0x05, 0x4C, 0x25, 0xAF, 0x43, 0x93, 0xB1, 0xC2, 0x99, 0xD1, 0x59} };
 
 	// 18cda784-4bd3-4370-85bb-bfed91ec86af
 	// Notify
 	// from byteworks example: txUUID$ = "18CDA784-4BD3-4370-85BB-BFED91EC86AF"
-	const uint128_t u128_txUUID = { 
+	const uint128_t u128_txUUID = {
 		.data = { 0x18, 0xCD, 0xA7, 0x84, 0x4B, 0xD3, 0x43, 0x70, 0x85, 0xBB, 0xBF, 0xED, 0x91, 0xEC, 0x86, 0xAF} };
 
 	/* Add Heart Rate Service */
@@ -2938,13 +3125,13 @@ static void populate_tune_service(struct server *server)
 	//bt_uuid16_create(&uuid, UUID_123TUNE_UNKNOWN);
 	//bt_string_to_uuid(&uuid,UUID_123TUNE_UNKNOWN_STR);
 	//bt_uuid128_create(uuid, UUID_123TUNE_UNKNOWN);
-	
-	// 0xDA2B84F1627948DEBDC0AFBEA0226079 
-	//u128 = { 
+
+	// 0xDA2B84F1627948DEBDC0AFBEA0226079
+	//u128 = {
 	//	.data { 0xDA, 0x2B, 0x84, 0xF1, 0x62, 0x79, 0x48, 0xDE, 0xBD, 0xC0, 0xAF, 0xBE, 0xA0, 0x22, 0x60, 0x79} };
 	// BLE Service blueRadiosUUID: "DA2B84F1-6279-48DE-BDC0-AFBEA0226079"
 	bt_uuid128_create(&uuid,u128_BRSP_Service);
-	
+
 	service = gatt_db_add_service(server->db, &uuid, true, 32);
 	server->tune_handle = gatt_db_attribute_get_handle(service);
 
@@ -2966,7 +3153,7 @@ static void populate_tune_service(struct server *server)
 
 
 	// READ transformed into READ + WRITE , may(probably) not complete
-	
+
 	// this uuid received write request with value 1, and returns value 1. in case of exit for the 123tune progamm the command 02 send by 123tune program.
 	// Characteristic: modeUUID$ = "A87988B9-694C-479C-900E-95DFA6C00A24"
 	// Set the mode to remote command mode (1) or 2??? exit command mode?
@@ -2982,7 +3169,7 @@ static void populate_tune_service(struct server *server)
 							NULL);
 
 	/* WRITE Characteristic */
-	//* gets written into first time: 
+	//* gets written into first time:
 	// Value: 24:24:0d:24:24:24:24:24:24:24:24:24:24:24:24:24:0d:31:30:40
 	// lenth: 20 bytes
 	// Characteristic rxUUID$ = "BF03260C-7205-4C25-AF43-93B1C299D159"
@@ -2994,11 +3181,11 @@ static void populate_tune_service(struct server *server)
 						server);
 
 
-	
+
 	// NOTIFY transformed into INDICATE ... not finished, reverted to NOTIFY
 	// Characteristic txUUID$ = "18CDA784-4BD3-4370-85BB-BFED91EC86AF"
 	bt_uuid128_create(&uuid, u128_txUUID);
-	
+
 	tune_msrmt = gatt_db_service_add_characteristic(service, &uuid,
 						BT_ATT_PERM_NONE,
 						BT_GATT_CHRC_PROP_NOTIFY,
@@ -3026,10 +3213,10 @@ static void populate_tune_battery_service(struct server *server)
 	bt_uuid_t uuid;
 	struct gatt_db_attribute *service, *body;
 	uint8_t body_loc = 0x64;  /* "Chest" */
-	
+
 	/* Add Battery Service Service */
 	bt_uuid16_create(&uuid, 0x180F);
-	
+
 	service = gatt_db_add_service(server->db, &uuid, true, 32);
 	server->tune_handle = gatt_db_attribute_get_handle(service);
 
@@ -3135,92 +3322,162 @@ static struct server *server_create(int fd, uint16_t mtu, bool hr_visible, bool 
 
 	// set internal state initial Voltage
 	decimal2TuneVoltage(12.6, &server->tune_Voltage[0],&server->tune_Voltage[1]);
-	
+
 	// set internal state initial Pressure
 	decimal2TunePressure(100, &server->tune_Pressure[0],&server->tune_Pressure[1]);
-	
+
+	// set new Advance in server Internal <static superceded by dynamic graph based code>
+	decimal2TuneAdvance(10.0 ,&server->tune_Advance[0],&server->tune_Advance[1]);
+
+
 	// set initial internal pincode
 	char2TunePinCode('7', &server->tune_Pincode[0][0],&server->tune_Pincode[0][1]);
 	char2TunePinCode('8', &server->tune_Pincode[1][0],&server->tune_Pincode[1][1]);
 	char2TunePinCode('3', &server->tune_Pincode[2][0],&server->tune_Pincode[2][1]);
 	char2TunePinCode('2', &server->tune_Pincode[3][0],&server->tune_Pincode[3][1]);
 	char2TunePinCode('\0', &server->tune_Pincode[4][0],&server->tune_Pincode[4][1]);
-	
+
+	printf("Set 123Tune initial pincode to 7832\n");
+
+	printf("AdvanceCurve RPM/Advance set to:\n");
 
 	// set initial internal Advance Curve (RPM/Advance), max 10 entries!!
 	graph_index=0;
 	decimal2TuneRPM(500, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);	// 500 is fixed
 	decimal2TuneAdvance(0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TuneRPM(700, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TuneRPM(800, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TuneRPM(1000, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(4.0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TuneRPM(1500, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(12.0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TuneRPM(1800, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(17.0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TuneRPM(3000, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(30.0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TuneRPM(4500, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);
 	decimal2TuneAdvance(33.0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TuneRPM(8000, &server->tune_AdvanceCurveRPM[graph_index][0],&server->tune_AdvanceCurveRPM[graph_index][1]);	// 8000 is fixed
 	decimal2TuneAdvance(33.0, &server->tune_AdvanceCurveDegrees[graph_index][0],&server->tune_AdvanceCurveDegrees[graph_index][1]);
+	print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+  print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
 
-	// set initial internal MAX RPM
-	decimal2TuneRPM(4500, &server->tune_RPMLimit[0],&server->tune_RPMLimit[1]);
+	graph_index++;
+    // re-use grapth_index variabele (as it has exactly the right value to start with) to finish aand fill the rest with default valuses
+    for(;graph_index < C_nr_123AdvanceCurve_Elements;graph_index++) {
+      // "0xFF" = 0x46,0x46
+      server->tune_AdvanceCurveRPM[graph_index][0] = 0x46;  // "0xG " == N/A
+      server->tune_AdvanceCurveRPM[graph_index][1] = 0x46; // "0x G" == N/A
+      server->tune_AdvanceCurveDegrees[graph_index][0] = 0x46;  // "0xG " == N/A
+      server->tune_AdvanceCurveDegrees[graph_index][1] = 0x46; // "0x G" == N/A
 
+      print_hex(server->tune_AdvanceCurveRPM[graph_index],2);
+      print_hex(server->tune_AdvanceCurveDegrees[graph_index],2);
+    }
+
+
+
+
+	printf("Predefined MAP table:\n");
 
 	// set initial internal MAP Curve (Vacuum/Advance), max 10 entries!!
 	graph_index=0;
 	decimal2TunePressure(0, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);		// 0 is fixed
 	decimal2TuneAdvance(11.0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TunePressure(29, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);
 	decimal2TuneAdvance(11.0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TunePressure(30, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);
 	decimal2TuneAdvance(11.0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TunePressure(40, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);
 	decimal2TuneAdvance(11.0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
-	
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
+
 	graph_index++;
 	decimal2TunePressure(88, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);
 	decimal2TuneAdvance(0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TunePressure(100, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);	// 100 is fixed
 	decimal2TuneAdvance(0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
 
 	graph_index++;
 	decimal2TunePressure(200, &server->tune_MapCurvePressure[graph_index][0],&server->tune_MapCurvePressure[graph_index][1]);	// 200 is fixed
 	decimal2TuneAdvance(0, &server->tune_MapCurveDegrees[graph_index][0],&server->tune_MapCurveDegrees[graph_index][1]);
+	print_hex(server->tune_MapCurvePressure[graph_index],2);
+  print_hex(server->tune_MapCurveDegrees[graph_index],2);
+
+	graph_index++;
+    // re-use grapth_index variabele (as it has exactly the right value to start with) to finish aand fill the rest with default valuses
+    for(;graph_index < C_nr_123MapCurve_Elements;graph_index++) {
+      // "0xFF" = 0x46,0x46
+      server->tune_MapCurvePressure[graph_index][0] = 0x46;  // "0xG " == N/A
+      server->tune_MapCurvePressure[graph_index][1] = 0x46; // "0x G" == N/A
+      server->tune_MapCurveDegrees[graph_index][0] = 0x46;  // "0xG " == N/A
+      server->tune_MapCurveDegrees[graph_index][1] = 0x46; // "0x G" == N/A
+
+      print_hex(server->tune_MapCurvePressure[graph_index],2);
+      print_hex(server->tune_MapCurveDegrees[graph_index],2);
+    }
+
 
 
 	// set initial internal MAP Curve start RPM (below MAP not active)
 	decimal2TuneRPM(1100, &server->tune_MapCurveStartRPM[0],&server->tune_MapCurveStartRPM[1]);
-	
+
+		// set initial internal MAX RPM
+	decimal2TuneRPM(4500, &server->tune_RPMLimit[0],&server->tune_RPMLimit[1]);
+
 	//
 	server->tune_TuningMode_enabled=false;
 	server->tune_TuningMode_Advance=0;
@@ -3629,15 +3886,15 @@ static void cmd_simulation(struct server *server, char *cmd_str)
         int rpm;
         int pressure;
         //int i;
-        
-        
-        
+
+
+
         // getopt_long example: http://www.ibm.com/developerworks/aix/library/au-unix-getopt.html
         int opt = 0;
 	int longIndex = 0;
-        
+
         static const char *optString = "r:p:Il:o:vh?";
-        
+
         static const struct option longOpts[] = {
 		{ "rpm", required_argument, NULL, 'r' },
 		{ "pressure", required_argument, NULL, 'p' },
@@ -3662,7 +3919,7 @@ static void cmd_simulation(struct server *server, char *cmd_str)
         argv[0]="__FUNCTION__";	// getopt_*() mismatch fix, fill argv[0]
         optind=0;	// reset global getopt*() to force to process from the beginning
 
-/*	
+/*
 printf("opt=%d argc=%d\n",opt, argc);
 for(i=0;i<argc;i++) {
 	printf(" argc=%d argv[%i]=%s\n",argc,i,argv[i]);
@@ -3681,54 +3938,54 @@ printf("opt=%d\n",opt);
         	        printf("RPM is now set to %d\n",rpm);
         	        decimal2TuneRPM(rpm,&server->tune_RPM[0],&server->tune_RPM[1]);
                 break;
-                
+
             case 'p':
  	               pressure=strtol(optarg,NULL,10);
  	               printf("Pressure is now set to %d\n",pressure);
  	               decimal2TunePressure(pressure ,&server->tune_Pressure[0],&server->tune_Pressure[1]);
                 break;
-                 
+
             case 'I':
                 //globalArgs.noIndex = 1; /* true */
                 break;
-                 
+
             case 'l':
                 //globalArgs.langCode = optarg;
                 break;
-                 
+
             case 'o':
                 //globalArgs.outFileName = optarg;
                 break;
-                 
+
             case 'v':
                 //globalArgs.verbosity++;
                 break;
-                 
+
             case 'h':   /* fall-through is intentional */
             case '?':
                 //display_usage();
                 simulation_usage();
                 break;
- 
+
             case 0:     /* long option without a short arg */
                 //if( strcmp( "randomize", longOpts[longIndex].name ) == 0 ) {
                 //    globalArgs.randomized = 1;
                 //}
                 break;
-                 
+
             default:
                 /* You won't actually get here. */
                 break;
         }
-         
+
         opt = getopt_long( argc, argv, optString, longOpts, &longIndex );
         //opt = getopt( argc, argv, optString );
     }
-    
+
 
 //sleep (5);
 return;
-        
+
 
         if (!strcmp(argv[0], "-r") || !strcmp(argv[0], "--rpm")) {
                 rpm=strtol(argv[1],NULL,10);
@@ -3736,23 +3993,23 @@ return;
 		decimal2TuneRPM(rpm,&server->tune_RPM[0],&server->tune_RPM[1]);
 		return;
 	}
-	
+
         if (!strcmp(argv[0], "-p") || !strcmp(argv[0], "--pressure")) {
                 pressure=strtol(argv[1],NULL,10);
                 printf("Pressure is now set to %d\n",pressure);
 		decimal2TunePressure(pressure ,&server->tune_Pressure[0],&server->tune_Pressure[1]);
 		return;
 	}
-	
-	
-	
+
+
+
         if (server->tune_msrmt_enabled && server->tune_visible) {
                 timeout_remove(server->tune_timeout_id);
                 server->tune_msrmt_enabled=0;
         }
 
         //server->tune_timeout_id = timeout_add(1000, tune_msrmt_cb, server, NULL);
-	
+
 	printf("Disable running simulation. TODO:  stop start and custom dynamic setttings\n");
 }
 
@@ -3922,7 +4179,7 @@ int main(int argc, char *argv[])
 	sigset_t mask;
 	bool hr_visible = false;
 	bool tune_visible = false;
-	
+
 	struct server *server;
 
 	while ((opt = getopt_long(argc, argv, "+hvr1s:t:m:i:",
@@ -4020,7 +4277,7 @@ int main(int argc, char *argv[])
 	mainloop_init();
 
 	server = server_create(fd, mtu, hr_visible, tune_visible);
-	
+
 	if (!server) {
 		close(fd);
 		return EXIT_FAILURE;
