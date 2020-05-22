@@ -38,6 +38,7 @@
 #include "lib/uuid.h"
 
 #include "src/shared/mainloop.h"
+#include "src/shared/mainloop-glib.c"
 #include "src/shared/util.h"
 #include "src/shared/att.h"
 #include "src/shared/queue.h"
